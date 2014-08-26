@@ -1,20 +1,13 @@
 <html>
-<link rel="stylesheet" type="text/css" href="index.css">
-<H1>Calculater</H1>
-<input  id="o1" value="2"/>
-<input  id="o2" value="3"/>
-<button onClick="multiple()">*</button>
-<br/>
-
-<span id="result">0</span>
-
+<style>
+	#time {font-size:200%;color:green;}
+</style>
+	 <span id="time">--:--:--</span>
 <script>
-	var multiple=function() {
-		var o1=document.getElementById("o1").value;
-		var o2=document.getElementById("o2").value;
-
-		document.getElementById("result").innerHTML=o1*o2;
-	}
+	setInterval(function(){
+		var timenow=new Date().toString();
+		timenow=timenow.substr(16,8);
+		document.getElementById("time").innerHTML=" timenow "+timenow + " <br><b> be happy" ;	
+	},3000);
 </script>
-
 </html>
