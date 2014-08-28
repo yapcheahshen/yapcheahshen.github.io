@@ -8,7 +8,7 @@
 		ihandle=setInterval("FB.getLoginStatus(loginstatus)",1000);
 	}
 	var loginstatus=function(response) {
-		if (!response.authoResponse) return;
+		if (!response.authResponse) return;
 		clearInterval(ihandle);
 		document.getElementById("command").value="/me";
 	}
