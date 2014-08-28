@@ -5,7 +5,7 @@
 	var ihandle=null;
 	window.fbAsyncInit=function() {
 		FB.init({appId:'740163129377550',status:true,cookie:true,xfbml:true,oauth:true});
-		ihandle=setInterval(FB.getLoginStatus.bind(FB,loginstatus),1000);
+		ihandle=setInterval("FB.getLoginStatus(loginstatus)",1000);
 	}
 	var loginstatus=function(response) {
 		if (!response.authoResponse) return;
