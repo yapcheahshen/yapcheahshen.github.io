@@ -3,7 +3,7 @@
 <script src="http://connect.facebook.net/zw_TW/all.js"></script>
 <script>
 	var ihandle=null;
-	window.fbAsyncInit=function() {
+	window.fbAsyncInit=function() {//216566131778225
 		FB.init({appId:'740163129377550',status:true,cookie:true,xfbml:true,oauth:true});
 		ihandle=setInterval("FB.getLoginStatus(loginstatus)",1000);
 	}
@@ -20,7 +20,7 @@
 	}
 </script>
 <div id="fb-root"></div>
-<div class="fb-login-button" size="large" scope="user_status,email" autologoutlink="true"></div>
+<div class="fb-login-button" size="large" scope="user_status,email,read_friendlists" autologoutlink="true"></div>
 <input id="command"></input>
 <button onClick="callfb()">call facebook</button>
 <div id="jsonres"></div>
