@@ -1,0 +1,2835 @@
+<html><head>
+<meta charset="UTF-8">
+<style>
+body {background-color: #DDDDDD;margin:0px;}
+.nesting{display:block;margin-left:0.7em;margin-top:0.5em;margin-bottom:0.5em;margin-right:3px;
+	border:1px dotted #1C6EA4;}
+div.node{border-bottom:1px solid black;margin-bottom:0.5em;}
+span.contentval{font-family: 'SimHei'}
+span.hl{color:red;}
+span.attr {font-size:75%;border-radius: 0.2em;
+	background-color:brown;color:white;
+	margin-left:10px;margin-right:3px;font-family:"SimHei";}
+span.unknown{color:yellow;background-color: red;font-size:150%;}
+span.title{font-family:"SimHei";border-radius: 0.2em;
+	background-color: #3f3f3f;color:#CFCFCF;cursor:ns-resize;}
+span.title:hover{color:white;}
+span.firsttitle{cursor: not-allowed;}
+span.firsttitle:hover{color:red;text-decoration: line-through;}
+span.unknownlink{color:red;text-decoration: line-through;}
+span.nodelink{border-bottom:1px solid #7f7fFF;}
+span.nodelink:hover{cursor: pointer;}
+
+span.backlink{}
+span.backlink:hover{border-bottom:2px solid brown;cursor: pointer;}
+.backlinks{background-color: #BBBBBB}
+span.linksep{border-left:2px solid #777777;margin-right:2px;}
+.backref {background-color: #DFDFAF}
+span.source{background-color:green;color:yellow;}
+
+.nodecontrol{position:absolute;width:100%;}
+.closebutton{font-family:SimHei;font-weight: bold;
+	width:1.1em;height: 1.1em;position:absolute;left:-1em;top:0em;}
+.closebutton:hover {
+border-radius: 50%;background-color: #ff5555;color:white;
+}
+.closebutton:before{content:"Ｘ";}
+
+#logo {font-family: Impact,SimHei ;font-size:125%;
+color:brown;cursor:pointer;}
+#searchpanel{background-color: #ccbbbb}
+input#tofind {font-size:125%;width:5em;}
+#cleartofind{font-family:SimHei;font-weight: bold}
+#cleartofind:hover{color:red;cursor:pointer;}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body onload=init()>
+<div id="searchpanel">
+	<span id="logo" onclick="api.logoclick()">法游</span>
+	<input id="tofind" oninput="api.tofindchange(this)" ></input>
+	<span id="cleartofind" onclick="api.cleartofind()">Ｘ</span>
+	<span id="searchresult"></span>
+</div>
+<div id="main">Unable to Initialize Application ，無法載入，瀏覽器須支持javascript</div>
+
+<script>
+window.rawdataset=[];//to be load from config.js
+const pagesfromhash=function(){
+	var page=document.location.hash.substr(1)||config.homepage;
+	var pages=page.indexOf("#")>-1?page.split("#"):[page];
+
+	const at=pages.indexOf(config.homepage);
+	if (at>=0 && pages.length>1) {
+		pages.splice(at,1);
+	}
+
+	if (pages[0]=="" &&pages.length==1) pages[0]=config.homepage;	
+	return pages;
+}
+const init=function(){
+	var dataset=builder.build(window.rawdataset,window.config);
+	var pageundo="";
+	var opts=Object.assign({pages:pagesfromhash(),dataset:dataset},window.config);
+	const maindiv=document.getElementById("main");
+	window.onhashchange=function(obj){
+		opts.pages=pagesfromhash();
+
+
+		maindiv.innerHTML=renderer.rendermain(opts);
+	}
+	const logoclick=function(){
+		const pages=pagesfromhash();
+		if (pages.length>3) {
+			pages.length=3;
+			document.location.hash="#"+pages.join("#");
+			return;
+		} else {
+			if (pages.length==0 || pages[0]==config.homepage) {
+				document.location.hash="#"+pageundo;
+			} else {
+				document.location.hash="";
+				pageundo=pages.join("#");
+			}
+		}
+	}
+
+	const showunknown=function(){
+		const ele=document.getElementById("searchresult");
+		ele.innerHTML=renderer.renderunknownlinks(dataset.unknown);
+	}
+	const setStatus=function() {
+		var res="";
+		res+=dataset.wordcount+" words";
+		res+=dataset.unknowncount?"<span onclick=api.showunknown() class=backlink>,"+dataset.unknowncount+" ?</span>":"";
+		res+=" ,ver:"+config.version;
+		document.getElementById("searchresult").innerHTML=res;
+	}	
+	const cleartofind=function(){
+		var ele=document.getElementById("tofind");
+		ele.value="";
+		api.options.tofind="";
+		ele.focus();
+		setStatus();
+	}
+	var tofindtimer=0;
+	const tofindchange=function(obj){
+		clearTimeout(tofindtimer);
+		const ele=document.getElementById("searchresult");
+		tofindtimer=setTimeout(function(){
+			const tf=tofind.value.trim()
+			const tfrx=new RegExp(builder.expandVar(tf),"gi");
+			const sr=builder.search(dataset,tf,tfrx);
+			ele.innerHTML=renderer.rendersearch(sr,tf);
+			api.options.tofind=tf;
+			api.options.tofindregex=tfrx;
+		},300)
+	}
+	setStatus();
+
+	const api=Object.assign({dataset:dataset,logoclick:logoclick,tofindchange:tofindchange,cleartofind:cleartofind,showunknown:showunknown,options:opts},renderer);
+	window.api=api;
+	maindiv.innerHTML=renderer.rendermain(opts);		
+}
+
+</script>
+<script><!--
+/* TODO , load dataset js from here , not in index.html */
+(function(){
+	const config={
+		homepage:"homepage",
+		version:"200223",
+		language:"zh",
+		typedef:{
+			"attr":{zh:"性質"},
+			"has":{zh:"含"},
+			"types":{zh:"类"},
+			"en":{zh:"英",req:true},
+			"zh":{zh:"中",req:true},
+			"amb":{zh:"歧"},
+			"pli":{zh:"巴",req:true},
+			"is":{zh:"是"},
+			"or":{zh:"或"},
+			"or1":{zh:"或"},
+			"or2":{zh:"或"},
+			"or3":{zh:"或"},
+			"def":{zh:"义"},
+			"base":{zh:"依處"},
+			"func":{zh:"功能"},
+			"content":{zh:"文",valuecls:"contentval"},
+			"classification":{zh:"上层类別"},
+			"stem":{zh:"根"},
+			"syn":{zh:"同"},
+			"anto":{zh:"反"},
+			"lakkhana":{zh:"相"},
+			"arm":{zh:"所緣"},
+			"rasa":{zh:"作用"},
+			"paccupatthana":{zh:"現起"},
+			"padatthana":{zh:"近因"},
+			"with":{zh:"配"},
+			"source":{zh:"出",cls:"source"},
+			"nd":{zh:"因緣"},
+			"fact":{zh:"事實"},
+			"nooff":{zh:"無犯"},
+			"editornote":{zh:"編按"}
+		}
+
+	}
+	window.config=config;
+})();
+
+
+//--></script>
+<script><!--
+window.cjkvar=" AĀ DḌ IĪ LḶ MŊṀṂ NÑṄṆ TṬ UŪ aā dḍ iī lḷ mŋṁṃ nñṅṇ tṭ uū 㐀丘丠坵 㐅五伍 㐫兇凶 㐮襄 㐯庸𠆌 㐱鬒 㐴攀扳 㐵儒 㐽偑 㑁𠭴 㑄侮 㑇㑳 㑈倲 㑌尩 㑔㑯 㑝𢙱 㑩儸 㒇儛 㒋厮廝 㒓𠉂 㒚稳穩 㒞儶 㒰全 㒲財财 㒷兴興 㓁網网罔 㓥劏 㓨刺刾刺 㓮彫雕凋琱 㓷劓 㓸斲斵 㔉劚 㔍䥷 㔱斞庾 㔾卩部 㕑𢊍 㕚爪爫 㕞刷 㖈䎛 㖊噚 㖞喎 㗖啖啗噉 㗲𠵾 㗳嗒 㘅啣衔銜 㘎㘚 㘽㦳 㙮塔墖 㙳轗 㚝奎奞 㚣姣 㚯㜄 㛀媰 㛛娠 㛟𡞵 㛠𡢃 㛣㜏 㛤孋 㛿𡠹 㜢𡞱 㜷𡝠 㝃娩 㝛宿 㝵碍礙 㞐居 㞞𪨊 㟆㠏 㟗豳邠 㟜𡾱 㠊岖嶇 㠯以 㠶帆 㡘𢅏 㡿斥 㢝𢋈 㣶邅 㣺心忄 㣼忍 㤒笨 㤘㥮 㤵慈 㥃悶闷懑懣 㥵慁 㦎𢛯 㦧憯 㧃収收 㧏掆 㧐㩳 㧑撝 㧖扼搤 㧜擸 㧟擓 㧰擽 㨉抿 㨗捷 㨨㩅 㨫㩜攬揽擥 㨼撂 㩁搉 㩹𢶣 㪅更更 㪯举擧舉挙 㫃偃 㫎幑𣄈 㫚昒曶 㬅曼 㬱朁 㬹踭 㭎棡 㭏椲 㭣𣙎 㭤樢 㭨椰 㭴樫 㮣槩槪概 㯃柒漆桼七 㯭樐櫓橹櫓艪舮舻艫艣 㯶棕椶 㯽梹槟檳 㰍栊櫳 㱩殰𦢌 㱮殨 㱿壳殼殻 㲒勽菢 㲓毧 㲿瀇 㳄涎 㳔濧 㳕灡 㳠澾 㳡濄 㳢𣾷 㳽彌瀰弥 㴑溯泝遡 㴔潝 㵒沸 㶉鸂 㶶燶 㶽煱 㷉熨 㷠燐燐粦 㷻煳 㷿𤈷 㺍獱 㺏𤠋 㻅璯 㻏𤫩 㻘𤪺 㽣域 㽽痼 㾙脪 㿟皎皦 㿧𤽯 㿷糙 䀋盐鹽塩𥂁 䀠瞿 䀢瞬 䀥䁻 䀹睫𥅴 䁖瞜 䁪𥇢 䂀𥋟 䂫夯 䂵碽 䃉玟珉玫砇 䃘硁硜踁 䄃殃 䄍蜡蠟蝋蠟 䄯𢆞 䄺稊 䅉稏 䅪𥢢 䆋秋龝秌穐 䆔竉𥥅 䆫窓窗 䇲筴 䈇罩 䉙𥬀 䉤籔藪薮 䉬𫂈 䉲𥮜 䉵籑饌馔 䊜糰 䊭𥺅 䊷䌶 䋙䌺 䋚䌻 䋲縄繩绳 䋻䌾 䋿𦈓 䌈𦈖 䌋𦈘 䌖𦈜 䌝𦈟 䌟𦈞 䌥縯𦈠 䌫纜缆 䌰𦈙 䌷紬綢绸 䌸縳 䌹絅褧 䌼綐 䌽綵 䍀繿襤褓褴襤 䍁繸 䏕飪餁饪 䐰饈馐𦟤 䒒苕 䓕薳 䔛檾 䕌稚穉稺 䕳𦰴 䖈乇虐 䖍虔 䖏処处處 䖟蝱 䖣蚤 䖵蜫 䗖蝃螮 䗿𧉞 䘑脈脉衇 䘚卆卒 䘛𧝞 䘞𧜗 䘺綻绽 䙊𧜵 䙌䙡 䙓襬 䙝亵褻褺 䚎𥅾 䛡話话 䛻誘诱 䛼譭 䜀䜧 䜊嘈 䜣訢 䜤鿁 䜥誕𧩙诞 䜩宴燕讌醼鷰 䜶豇 䝋豵 䝙貙 䝜狻 䝤獠 䝻𧹕 䝼䞍 䞈𧹑 䞌𧵳 䞎𧶧 䞐賰 䞓赪赬 䟢躎 䠱躅 䢀𨊰 䢁𨊸 䢂𨋢 䢙敗败 䢨𨑹 䣩醇 䤍𨢥 䥀捵 䥇䦂 䥑鿏 䥨鑢 䥩𨱖 䥱䥾 䥺釾 䥽鏺 䥿𨯅 䦀𨦫 䦁𨧜 䦃鐯 䦅鐥 䦓覘觇𦕒 䦘𨸄 䦛䦶 䦟䦷 䦳𨷿 䧢𨸟 䨘霰 䩞韂 䪊龓 䪏𩏼 䪗𩐀 䪘𩏿 䪿囟顖 䫴𩖗 䬒颼飕 䬘𩙮 䬝𩙯 䬞𩙧 䬡翥 䭀𩠇 䭃𩠈 䭪𩞯 䭾馱駄驮 䭿𩧭 䮝𩧰 䮞𩨁 䮠𩧿 䮫𩨇 䮳𩨏 䮾𩧪 䯀䯅 䯃𩣑 䯄騧 䯌尻 䯻髻 䰗阄鬮 䰾鲃 䱇鱓鱔鳝 䱙𩾈 䱬𩾊 䱰𩾋 䱷䲣漁渔 䱽䲝鯧鲳 䲁鳚 䲖𩾂 䲞𩶘 䲟鮣 䲠鰆 䲡魷鰌鰍鱿鳅 䲢鰧 䲤鿐 䲰𪉂 䴉鹮 䴓鳾 䴔鵁 䴕鴷 䴖鶄 䴗鶪 䴘鷈 䴙鷿 䴬𪎈 䴴𪎋 䴹餜馃 䵑䵒 䶏洟涕 䶮龑 一壹搋弌扠 丄上 丅下 万卍卐萬 三叁參叄参叅參蓡 丌其亓 不不 与與 丐匃匄 丑醜 专專耑専 世丗卋 业業 丛叢樷 东東 丝絲纟糸糹 丟丢 両两兩兩 丣酉 严厳嚴 並并幷竝併倂𠊧 丧喪 个個箇 丬爿𤕪 丰豊豐 丱卝 串串 临臨臨 丹丹 为為爲 丽麗麗 乃廼迺 久乆 么幺庅麼麽 义義 乌烏 乐樂樂楽樂樂 乔喬 乕虎 乗乘 乚隐隱隠 九玖 习習 乡郷鄉鄕 书書 乩稽 买買 乱亂亂 乾亁干榦幹 亀龜龟龜龜 了瞭了暸 予余豫預餘预馀 争爭 亊事 二弍贰貮貳 亍街 于扵於亏虧 云雲 亗岁歲𡻕嵗歳 亘亙 亚亜亞 亝齊齐斉 亡亾兦 产產産 亩畆畝畮畒 享亯 京亰 亮亮 亱夜 亲榛親 亷廉廉 亸嚲 人亻 亼集 亿億 什什甚 仁忈 仂働 仃停 仅僅 仆僕 仇讎讐雠 从従從 仏佛 仑侖崙崙崘 仓倉 他她它牠佗 仙僊 仝同衕 仞仭 仟千阡 令令 仪儀 们們 仮假 价價価 任仼 份彬斌 仾低 仿倣彷髣徬 伀彸 伃妤 众眾衆𠂝 优優 伙夥 会會 伛傴 伜倅 伝傳传 伞傘繖 伟偉 伡俥 伣俔 伤傷 伥倀 伦倫倫 伧傖 伩信 伪偽僞 伫佇竚 伭玄 伱你妳伲奶嬭 伷冑胄 伸抻 佈布 佋紹绍 佑祐 体軆體躰骵 佔占 佞侫 佣傭 佥僉 佰百 併倂 侁詵诜駪 侂託讬 侄姪 侅賅赅 來倈徕徠来來俫勑勅敕 侉誇夸 例例 侎敉 侚殉狥 侠俠 侣侶 侥僥徺儌 侦偵 侧側 侨僑 侩儈 侪儕 侬儂 侭儘尽盡 便便 俁俣 係系繫繋 俈喾嚳 俊儁 俎爼 俓径徑迳逕 俞兪 俟竢 俦儔 俨儼 俩倆 俪儷 俭儉倹 俯頫 俱倶 俲效効 俻備备偹 倏倐 倖幸 倘傥儻 借耤藉 値值 债債 倾傾 偁称稱穪 偊踽 偐贋贗赝 偒荡蕩盪蘯 健徤 偪逼 偬傯 偷偸 偺咱昝喒 偻僂 偾僨 偿償 傁叜叟 傌罵骂駡 傏搪 傑杰 傜徭 傢家 傤儎 傧儐 储儲 傩儺 傻儍 傽慞 像象 僚僚 僣僭 僱雇 儆警 儓台檯枱臺颱 儗拟擬 儣𠆲 儭衬襯 儿兒児 兀兀 光灮 克剋尅 兌兑 兎兔 兖兗 党黨 內内 八捌 六六 兮𠔃 兰蘭蘭 关寡關関闗𨶹 兹玆茲 养養 兽獸獣 兿埶艺藝秇蓺芸蕓 冁囅 冂冋坰 冄冉 円圓圆圎 冈岡崗岗 冊册 冐冒冒 冗宂冗 写冩寫 军軍 农莀農 冝宐宜 冢塚塚 冤寃 冦寇宼 冨富 冪幂羃鼏 冫冰氷 冬鼕 冯馮 冱沍沪滬 冲沖盅衝𧘂 决決 况況湟 冷冷 冻凍 冽洌 净凈淨浄 凂浼潣 凃塗涂 凄淒悽 凅涸 准凖準 凉涼凉鿌 凌凌 减減 凑湊 凙𪞝 凛凜懔懍凜 凞凞 几幾 凡凢凣 凤鳯鳳 凨風风 凫鳧 凭凴憑𠗦 凯凱 凳櫈 凷块塊 凹𠕄 出岀 击撃擊 凼幽 函凾圅 凿鑿 刀刂 刃刄 刅创剙創刱剏戗戧 切切 刈苅 刊刋 刍芻蒭𦷝 划劃 刓园園 刔抉 列列 刘劉劉 则則 刚剛 删刪 別别 刦刧劫刼 刨鉋铇 利𥝢利 刬剗剷鏟铲 刭剄 刮颳 刱剏 刴剁 制製 券劵 刹剎 刽劊 刿劌 剀剴 剂剤劑 剃鬀 剐剮 剑劍劒剣剱劎劔釖釼 剝剥 剦閹阉 剧劇 剩剰賸 剪翦 剳劄箚札 剾𠛅 剿勦𠞰 劆鐮鎌镰 劈擗 力力 劝勧勸 办辦 务務 劢励勵勱勵 劣劣 动動 劲勁 劳勞勞労 势勢 勃艴 勄敏 勋勛勲勳 勒勒 勖勗朂 勚勩 勝胜 勤懃 勰协協恊旪 勹包 勻匀 勾句句 匆怱悤 匈胷胸 匊掬 匋陶 匏瓟 北北 匘脑腦脳 匙鍉 匝帀迊 匦匭 匧箧篋 匮匱樻柜櫃鐀餽饋馈 匯彙汇滙彚 匳奁奩 匵椟櫝 匹疋 区區 医醫 匿匿 十拾 卄廾廿 升昇陞 卉芔 卌𠦌 华崋華 单単單 卖売賣 博愽 卢盧盧 卤鹵 卧臥 卫衛衞 卬卭 卮巵 卯夘戼 即卽 却卻 卵卵 卷捲巻 卸缷 卹恤賉 厂厰廠 厄戹阨阸 厅廰廳厛庁 历厉厲厤曆歷暦歴曆歷 压圧壓 厌厭 厍厙 厎砥 厐庞龎龐厖庬 厓崖崕 厕厠廁 厖庬 厘釐 厢廂 厣厴 厦廈 厨廚 厩廄廐廏 厪廑 厵源沅 厶某私 厷肱 厹叴 县縣 叆靉 叇靆 双雙 发発發髮彂髪 叔尗 变變変 叙敍敘 叝告吿 叠曡疉疊畳迭 叡睿 叨饕 只子止隻祗 叫呌 叵尀 叶葉葉 号號 叹嘆歎 叽嘰 吁籲龥 吃喫 吅喧諠 合閤闔阖 吊弔 后後 吏吏 向嚮曏 吒咤 吓嚇 吕呂呂 吗嗎 吚咿 吝恡吝悋 吞呑 吟唫 吣唚 吨啍噸 听聽聴聼 启啓啟啔 吲哂 吳吴呉 吶呐訥讷 吸噏 吹龡 吻呡肳 呆獃騃𫘤 呒嘸 呓囈 呕嘔 呖嚦 呗唄 员員 呙咼 呛嗆 呜嗚 呠喷噴歕 周週 呪咒詋 呱哌 呵嗬訶诃 呼嘑虖謼 咀嘴觜 咂𠯗 咊和龢 咏詠 咙嚨 咛嚀 咝噝 咨嗞谘諮 咩哶 咬齩 咯詻 咲笑 咳欬 咷啕 咸鹹 咽嚥咽 哄閧鬨 响響 哑唖啞瘂痖 哒噠 哓嘵 哔嗶 哕噦𧬨 哗嘩譁 哙噲 哜嚌 哝噥 哟喲 哦誐 哯𠯟 哲喆悊 哴喨 唁喭 唇脣 唉欸誒诶 唊硖硤 唛嘜 唝嗊 唠嘮 唡啢 唢嗩 唤喚 唧喞 唬猇虓諕 唷唹 唾涶 啃齦龈 啎忤迕 問问 啜欼歠諁 啧嘖 啬嗇 啭囀 啮嚙齧囓 啯嘓 啰囉罗羅羅 啴嘽 啸嘨嘯歗 啼嗁 喂餧餒馁 喃娚嫐諵 善譱 喇喇 喐郁鬱欝鬰 喜憙 喩喻 喰餐飡 営營营 喽嘍謱 喿噪譟 嗀嗀 嗅齅 嗉膆 嗥嘷嚎噑 嗫囁讘 嗳噯 嗹𪡏 嗽瘶 嘎尜 嘗尝甞 嘘噓 嘤嚶 嘱囑 嘿默黙 噁恶惡惡悪 噂譐 噅噕𠯠 噐器 噜嚕 噹当當 嚏嚔 嚠瀏浏 嚢囊 嚣囂嚻 嚬顰颦 嚵饞馋 嚹𡅈 囌蘇苏蘓 囘回囬廻迴廽逥 四肆 团団團 囤𥫱 囪囱 囮𡈙 囯国圀國 困睏 囲围圍 図图圕圖 囵圇 囹囹 圈圏 圝圞𪢮 圢町 圣堊聖垩 圬杇 圭珪 圹壙 场場塲 圻垠 址阯 坂阪 坆坟墳 坋坌 坎埳 坏坯壞壊 坐座 坑阬 坚堅 坛墰罈壇壜 坜壢 坝垻壩 坞塢隝邬鄔隖 坠墜 坤堃 坫店 坭泥泥 垂埀 垄壟壟 垅壠 垆壚 垒塁壘壘 垓陔 垔堙陻 垛垜 垦墾 垫墊 垭埡 垱壋 垲塏 垴堖 垵埯 埇甬 埒埓 埘塒 埙塤壎 埚堝 埜野 埰釆采採 執执 埼崎嵜碕 埽扫掃 堇菫 堈缸罁 堑塹壍 堕墮 堘塍 堤隄 堦阶階 堭隍 堯尧尭 報报 堺界畍 堿硷鹼鹻礆險碱险険鹸 塆壪 塈墍 塋茔 塐塑 塜塳 塞塞 塟葬 塡填窴 塵尘 墈磡 増增 墙墻牆廧 墝硗磽 墤隤 墫樽罇節节 壈𡒄 壌壤 壐玺璽 壮壯 声聲 壶壷壺 壸壼 壻婿聟 壽夀寿 夅降降 夊攴攵扑撲 复復複覆復 夐敻 多夛 够夠彀 夢夣梦 天靔靝 夭殀 夲本 头頭 夹夾 夺奪 奂奐 奇竒 奈柰奈 奋奮 奌点點 契契 奔犇逩 奕弈 奖奬獎奨 奘弉 奥奧 女女 奸姦 奼姹 妆妝粧 妇婦媍 妈媽 妊姙 妍姸 妒妬 妙玅 妩娬嫵 妪嫗 妫媯嬀 姆姥 姉姊 姍姗 姜葁薑 姢娟 姫姬 姻婣 娄婁 娅婭 娆嬈 娇嬌撟挢 娈孌 娘嬢孃 娛娯娱 娲媧 娴嫺嫻 娿婀 婬淫 婳嫿 婴嬰孾 婵嬋 婶嬸 婾媮 媆嫩𡞾 媪媼 媭嬃 媿愧 嫉𡜱 嫋嬝袅裊 嫒嬡 嫔嬪 嫕嫛 嫫嬤嬷 嫱嬙 嬾懶懒懶 孀霜 孙孫 孚孵 学學斈 孪孿 孭𧴯 孳孶 孼孽 宁寍寧寕寜𡨴寧寧 宅宅 完烟煙菸 宍肉 宝寚寳寶 实実寔實 宠寵𠖥 审審 宪憲 宫宮 宻密 宽寛寬 宾賓賔 寓庽 寗甯 寘置 寝寢 察詧 寠窭窶 寨砦 寮寮 对對 寻尋 导導 尃敷旉 将將𤕭 尒尔爾尓 尙尚 尟鮮鱻鲜尠 尢尣 尥尦 尨狵龍竜龒龙龍 尪尫 尰肿腫 尲尴尷 尸屍 尿氼溺氽脲尿溺 层層 屃屓屭 屆届 屉屜𡲕 屏拼摒屛 属屬𡱆 屡屢屢 屣蹝躧 履履 屦屨 屩蹺𪨗跷蹻𫏋 屿嶼 岂豈豈 岐歧 岘峴 岙嶴 岚嵐嵐 岛島嶋嶌 岨砠 岩巌巖 岫峀 岭岺嶺嶺 岳嶽 岽崠崬 岿巋 峄嶧 峒洞洞 峡峽 峣嶢 峤嶠 峥崢 峦巒 峨峩 峭陗 峯峰 峺硬 崂嶗 崃崍 崄嶮 崇崈 崐崑 崒崪 崔磪 崟嵚嶔 崧嵩 崭嶄巉 嵆嵇 嵘嶸 嵝嶁 嵠谿 嵯嵳 嵼𡶴 嶃磛 嶎蔚 嶝磴 巅巓巔 巍魏 巛川 巡廵 巢巣 巤鬣 巨鉅钜 巩鞏 巯巰 巴笆芭 巺巽 币幣幤 帅帥 师師 帋紙纸 希稀 帏幃 帐帳賬账 帒袋 帘簾𢅖簾 帙袠 帚箒菷 帜幟旘 帡帲 带帯帶 帧幀 帬裙裠 席蓆 帮幇幫幚 帰归歸皈 帱幬 帻幘 帼幗 幕幙 幞襮 幡旛 幢橦 幱襕襴 年年秊秊 幵开開 广廣広 庄荘莊 庆慶 床牀 庐廬廬 庑廡 库庫 应応應 庙廟庿 废廃廢 度度廓廓 庵菴 庶庻 庼廎 廀廋 廊廊 廌豸 廕荫蔭 廩廪稟禀 廱雝簌 廸迪 廹迫 弁辨辯辧辩 异異異 弃棄 弄弄 弊𡚁 弋𢍺 弑弒 张張 弢韜韬 弦絃 弪弳 弯彎 強强彊 弹彈弾 彐彑 录錄録錄 彗篲 彛彝彞彜 彟彠 彥彦 彨彲 彻徹澈 彿髴 往徃迬 征徵徴 律律 徒𨑒 御禦馭驭 徧遍 徨遑 徳德悳惪 忆憶 忏懴懺 志誌 忞敃暋 忧憂 忭昪 忰悴 念念 忻欣 忼慷 忾愾 怀懷怌懐 态態 怂慫 怃憮 怄慪 怅悵 怆愴 怒怒 怜憐憐怜 怪恠 怳恍 总搃総總捴摠𢰾縂 怼憝懟譈 怿懌 恂悛 恆恒 恋戀戀 恐𢙢 恥耻 恩摁 恳懇 恵惠 恸慟憅 恹懨 恺愷 恻惻 恼惱 恽惲 恿慂 悁懁 悅悦 悐惕 悚𢥠 悞悮誤误 悠滺 悫愨慤 悬懸 悭慳 悯愍憫 惇敦 惊驚 惛惽 惝𢠵 惧懼 惨慘 惩懲 惫憊 惬愜 惭慙慚 惮憚 惯慣 惷蠢 惺𢜫 愈愉癒瘉 愛爱 愠慍 愤憤 愦憒 愬訴诉 愻逊遜 愼慎昚眘 愿願𫖸 慄栗慄栗 慑懾 慭憖 慮虑 慼慽 慾欲 憇憩 憋𢠳 憔顦 憰譎谲 懀𢙓 懜懵 懞蒙朦矇苎苧薴 懥懫 懽欢歡驩歓讙 戆戇 戉鉞钺 戋戔 戏戯戲戱 战戦戰 戛戞 戝賊贼 戩戬 戮戮 戶户戸 戻戾 扁碥 扅扊 扇煽搧 手扌 扎紮紥 扐朸 扑撲 払拂 托拓拓摭 扛摃 扞捍擀 扩擴拡 扪捫 扬揚 扯撦 扰擾 扱插揷 扺抵 抃拚 抌舀 抍拯 抔抱 抚拊捬撫 抛拋 抜拔 抝拗 択择擇 抟摶 抠摳 抡掄 抢搶 护護 抬擡 抽𢭆 担擔 拇𧿹 拉柆拉 拏拿拏挐 拐枴 拕拖 拜拝 拠据據 拢攏 拣揀 拥擁 拦攔 拧擰 拨撥 拭𢂑 拴揎 挂掛 挅挆 挚摯 挛攣 挜掗 挝撾 挞撻 挟挾 挠撓 挡擋攩 挣掙 挤擠 挥揮 挦撏 挩捝 挫繲 挭骾鯁鲠 挱挲 挷搒 挼捼 挽輓 捆綑 捏揑 捓揶 捜搜𢯱𢲷 捞撈 损損 捡撿 换換 捣搗擣𢭏 捦擒 捨舍舎 捶搥箠 捻捻 掂敁 掏搯 掐𠜼 掘撅 掠掠 掩揜 掲揭 掳擄虜擄虏虜 掴摑 掷擲擿 掸撣 掺摻 掻搔 掼摜 掽碰 揅研硎 揝撍 揦攋 揪揫 揯搄 揸摣查楂査槎 揺搖摇 揾搵 揿搇撳 搀攙 搁擱 搂摟 搅搞攪撹 搆構构 搨搭撘 搫搬 携攜 摂摄攝 摅攄 摆擺 摈擯 摊攤 摋𢫬 摡溉漑 摮𢳆 撄攖 撆撇 撐撑 撚撚 撵攆 撷擷 撸擼 撺攛 擃攮 擞擻 攅攒攢 攷考 敌敵 敎教 敓敚 敛斂歛 敠敪 敩斅斆𢽾鏰镚錋 数數數 敺驅驱駆駈 敽敿 斁𤢕 斃毙 斋斎齋 斍覺覐覚觉 斓斕 斗鬥鬬鬭闘鬦鬪 料料 斚斝 斤觔筋 斩斬 断斷 斾旆 旂旗 旅旅 旈旒 无無橆 既旣 旦蛋蜑疍 旧舊 旭旮旯 时旹時 旷昿曠 旸暘 昂昻 明朙 昏昬 易易 昙曇 昜氜阳陽 映暎 春萅 是昰 昵暱 昶暢畅 昷𥁕 昼晝 昽曨 显顕顯 晁朝 晃晄 晅烜 晉晋 晒曬 晓暁曉 晔曄曅 晕暈暈 晖暉 晚晩 晡𣇀 晢晰晳 晴晴 晻暗闇 暂暫 暖煖 暠皜𣉞 暧曖瞹 暨曁 暴虣暴 曜燿耀 曥𣆐 曳曵 曹曺 曽曾 朌頒颁 朐胊鸜鴝鸲 朖朗朗 朘脧 望朢 朞期稘 朥𦛨 朧胧 朩等 术術 朳杷 朴樸 朵朶 机機 朿莿 杀殺殺 杂襍雑雜 权権權 杆桿 李李 村邨 杝柂 杠槓篢 条條粜糶 杧芒 杨楊 杩榪 杯桮盃 杴锨 杸殳 杻杻 松枀枩鬆 板版闆 极極 枏楠枬 林林 果菓 枞樅 枢樞 枣棗 枥櫪 枧梘 枨棖 枪槍 枫楓 枭梟鴞鸮 架榢 枾柹柿 柁舵 柄棅 柏栢 柚櫾 柠檸 柩柾 柳柽檉柳 柴茈 柵栅 栀梔 栄榮荣 标標檁檩 栈桟棧 栉櫛 栋棟 栌櫨 栎櫟 栏欄欄 树樹 栒簨 栖棲 栛荔茘 栝桧檜 栰筏 样様樣 核槅覈 栾欒灤滦 桁航 桌棹櫂 桑桒 桜櫻樱 桠椏 桡橈 桢楨 档檔欓𣗋 桤榿 桥橋 桦樺 桨槳 桩樁 桪樳 梁樑梁 梅楳 梨棃梨 梲棁棳 梺麓 梼檮 梾棶 梿槤 检検檢 棂櫺欞 棊棋碁 棐榧 棑篺 棥樊 棰槌椎 棱楞稜稜 椀盌碗 椁槨 椒茭 椘楚 椝槼 椠槧 椢槶 椤欏 椫樿 椭楕橢 椹葚 楙茂 楜胡衚糊葫蝴鬍 楡榆 楥楦 楫檝艥 楼樓樓 榄欖 榅榲 榇櫬 榈櫚 榉櫸 榎槚檟 榘矩 榨醡 榴橊 槀稾稿 槃盘盤 槇槙 槊鎙 槖橐 槛檻 槜檇 槠櫧 槹𣓌 槻規规 樚轆辘 横橫 樯檣艢 橇鞒鞽 橓蕣 橛橜 橥櫫 橱櫉櫥 橼櫞 檐簷 檘蘗櫱蘖 檛簻 檠𢐧 檭𣘴 檴穫获獲 檼櫽 櫌耰 櫱蘖 欍𣐤 欠歉缺 欤歟 欧歐 欵款 欶𠲿 欹猗 欽钦 歌謌 步歩 歯齒齿 歱踵 歹歺 歼殲殱 歿殁 殇殤 残殘 殒殞隕磒陨 殓殮殮 殚殫 殡殯 殴毆 殽淆 毀毁 毂轂 毎每 毓育 毕畢 毗毘 毡氈氊 毬球 毵毿 氂牦犛髦 氅鷩 氇氌 氓甿 气気氣炁 氢氫 氤絪 氩氬 氯綠绿綠緑 氲氳 水氵 氾泛汎 汉漢 汙汚污洿 汤湯 汹洶 沈沉瀋沈 沒没 沟溝 沢泽澤 沣灃 沤漚 沥瀝 沦淪淪 沧滄 沨渢 沩溈潙 沱沲 沵濔 泄洩渫 泉洤 泊泺濼 泌泌 泖茅茆 泙洴 泞濘 注註 泪淚淚涙 泶澩 泷瀧 泸瀘 泻瀉 泼溌潑 泾涇 洁潔 洒灑 洚洪 洛洛 洼窪 流流 浃浹 浅淺 浆漿𤕯 浇澆 浈湞 浉溮 浊濁 测測 浍澮 济濟済 浐滻 浑渾 浒滸 浓濃 浔潯 浕濜 浚濬 浜濱滨濵濒瀕 浣澣 浩澔 浪浪 涅湼 涉渉 涌湧 涖莅蒞𦲷 涗涚 涛濤 涜瀆渎 涝澇 涞淶 涟漣漣 涠潿 涡渦 涢溳 涣渙 涤滌 润潤 涧澗磵 涨漲 涩澀澁渋濇瀒 淀澱 淋淋 淜漰 淡澹 淥渌 淳湻 淵渊渕 淸清 淹渰 渇渴 渍漬 渐漸 渑澠 渓溪 渗滲 渚陼 渨隈 温溫 游逰遊 渹訇𢕐𥔀 湏須须鬚 湾灣 湿溼濕 満滿满 溁濚 溃潰 溅濺 溆漵 溇漊 溜澑溜 溻褟 溽縟缛 滅灭烕 滎荥 滑磆滑 滗潷 滚滾 滞滯 滟灔灧灎灩 滠灄 滢瀅 滤濾濾 滥濫濫 滩潬灘 滪澦 漇𢳜 漎潀潨 漏漏 漓灕 漤灠 漫澷 漱潄 漾瀁 潁颍 潅灌 潆瀠 潇瀟 潋瀲 潍濰 潛潜濳 潟澙 潴瀦 潸𣽽 澂澄 澅𣶩 澛瀂 澜瀾 澳袄襖𥜌 濆𣸣 濑瀨瀬 濛霥靀 濶闊阔 濿砅 瀃𣽷 灏灝 灙𣺼 火灬 灯燈 灰灰 灴烘 灵靈靈霊 灶竃竈 災灾烖菑甾 灿燦 炀烊煬 炅耿炔 炉爐爐 炙炙 炜煒 炝熗 炤照 炮炰砲礮礟 炯烱 炸煠 炼煉煉錬 炽熾 烁爍 烂爛燗爛 烃烴 烈烈 烉焕煥 烙烙 烛燭 烝蒸 烦煩 烧燒簫焼箫箾簘 烨燁 烩燴 烫燙 烬燼 热熱𤍠 焔焰燄 焖燜 焘燾 焦焳 焭煢茕 煅鍛锻 煆鍜 煇輝辉 煑煮 煕熈熙 煴熅 熇燺 熉𤈶 熌𤇄 熏燻爋𤑕 熒荧 熓𤆡 熔鎔镕 熡𤋏 熲颎 熹熺 燎燎 燣燷 爄𤇃 爷爺 牄跄蹌 牋笺箋 牍牘 牕窻 牛牜 牟麰 牢牢 牴羝觝 牵牽 牺犧犠 犁犂 犊犢 犖荦 犬犭 犲豺 犴豻 状狀狀 犷獷 犸獁 犹猶 狈狽 狝獮 狞獰 狢貉 独獨 狭狹陜陝陕 狮獅 狯猾獪 狰猙 狱獄 狲猻 狷獧 狸貍 狼狼 猃獫玁𤞤 猋颮飑飇 猎獵𤢪獵猟 猕獼 猡玀 猨猿蝯 猪豬猪 猫貓 猬蝟 献獻 獐麞 獭獺 獾貛 率率率 玑璣 玙璵 玚瑒 玛瑪 玮瑋 环環 现現 玱瑲 玲玲 玳瑇 珍珎 珐琺 珑瓏 珞珞 珰璫 珲琿 珶瑅 珷碔 琄鞙 琅瑯 理理 琉瑠琉璢 琎璡 琏璉璉 琐瑣 琼瓊 瑙碯 瑤瑶 瑩莹瑩 瑷璦 瑸璸 瑽𪻐 璁𤧚 璃瓈 璇璿 璎瓔 璘璘 瓒瓚 瓕𤦀 瓮甕罋 瓯甌 瓶甁缾 瓷甆磁 甎砖磚 甖罂罌罃 甛甜 甤蕤 甦稣穌 甪角 电電 画畫畵 甽畎 畄留畱留 畊耕简簡 略畧略 番蹯 畬畭畲 畴疇 畺疆 畽疃 疎疏 疖癤 疗療療 疟瘧 疠癘 疡瘍 疣肬 疬癧 疭瘲 疮瘡 疯瘋 疱皰 疴痾 疸瘅癉 疹胗 症癥 痈癰 痉痙 痐蚘蛔蜖蛕 痒癢 痢痢 痨癆 痩瘦 痪瘓 痫癇 痮胀脹 痲痳 痴癡 痹痺 瘆瘮 瘗瘞 瘘瘺瘻 瘨癫癲 瘪癟 瘫癱 瘾癮 瘿癭 癛癝 癞癩癩 癣癬 癨霍 癯臞 登豋 皁皂 皃貌貎 皋皐臯睾𦤎 皑皚 皓皝顥颢 皞皡皥 皟𤾀 皱皺縐绉 皲皸 皷皼鼓鼔 盇盍 益益 盏盞 监監 盖葢蓋 盗盜 盙簠 盩盭 省省 眇緲缈 眈耽躭 眍瞘 眎視视 眙瞠瞪 眞真 眥眦 眬矓 着著 睁睜 睍𪾢 睐睞 睑瞼 睹覩 瞅矁 瞆瞶 瞍𥈟 瞒瞞 瞤𥆧 瞥苤 瞩矚 瞯瞷 瞰矙 矈矏 矋矖 矢笶 矧訠 矫矯 矮躷 石𥐘 矶磯 矾礬 矿礦鑛砿鉱 砀碭 码碼 砌纖纤縴繊纎 砒磇 砕碎 砗硨 砚硯 砜碸 砣鉈铊𥓿 砧碪 砺礪礪 砻礱𤮨 砾礫 础礎 硕碩 硙磑 硚礄 硫硫 硭𥐞 确確 硵磠 碌碌 碙𥐻 碛磧 碜磣 磊磥磊 磌𧰊 磻磻 礒𥐟 礡礴 礶缶罐缻鑵 示礻 礼禮禮礼 礿禴 祃禡 祎禕 祕秘 祘筭算 神神 祢禰 祥祥 祯禎 祷禂禱 祸禍 祺禥 祿禄祿 禅禪 福福 离離離 禿秃 秄耔 秆稈 秈籼 种種 秏耗 秐耘 秔稉粳 秕粃 积積 秸稭 移迻 秽穢 秾穠 稅税 稆穞穭 稬粫糯穤𥻟 稲稻 穀糓谷 穂穗 穅糠 穎頴颕颖 穑穡 穣穰 穷窮竆 穽阱 窃竊 窌窖 窍竅 窎窵 窑窯窰 窜竄 窝窩 窥窺 窦竇 立立 竖竪豎 竞競竸誩 竻簕𥵚 竾箎篪 竿𣔼 笃篤 笋筍 笓篦 笔筆 笕筧 笛篴 笠笠 笻筇 笼籠籠篭 笾籩 筐筺 筑築 答荅 策筞 筚篳 筛篩簛簁 筜簹 筝箏 筦管 筯箸 筱筿篠 筹籌 筼篔 签簽籤籖 简簡 箍箛 箓籙 箖篮籃 箝鉆鉗钳鑽钻鑚 箦簀 箨籜 箩籮 箪簞 箬篛 箳簈 箴針针鍼 範范 篑簣蕢籄蒉 篓簍 篘𥬠 篡簒 篯籛 篱籬 簑簔蓑 簖籪 籁籟 籋𥬞 籐籘藤 籥龠 籴糴 类類𩔗類 粋粹 粒粒 粗觕麁麄麤 粘黏 粛肃肅 粝糲 粤粵 粥鬻 粪糞 粮糧糧 粽糉糭 精精 糁糝 糇餱 糕餻 糖餹糖 糟醩 糡糨 糤饊馓 糺糾纠 紀纪 紂纣 約约 紅红 紆纡 紇纥 紈纨 紉纫 紋纹 納纳 紐纽紐 紓纾 純纯 紕纰 紖纼 紗纱 紘纮 級级𨸚 紛纷 紜纭 紝纴 紟衿襟 紡纺 索索 紧緊𦂳 累纍累 細细 紱绂 紲絏緤绁 紳绅 紵纻 紺绀 紼绋 紿绐 絀绌 終终 組组 絆绊 絋絖纊纩 経經经𦀇 絎绗 結结 絕絶绝 絚緪縆 絛縚绦 絝綯裤褲绔袴绹 絞绞 絡络 絢绚 絥鞴 給给 絨绒 絰绖 統綂统 絳绛 絵繪繢缋绘 絷縶 絹绢 絺𫄨 綀𦈌 綁绑 綃绡 綆绠 綇𦈋 綈绨 綉繍繡绣 綌绤 綏绥 継繼继 続續续 綜综 綞缍 綣绻 綫線线缐 綬绶 維维 綰绾 綱纲 綳繃绷 綴缀 綸纶 綹绺 綺绮 綽绰 綾绫綾 綿緜绵 緄绲 緇缁 緋绯 緍𦈏 緐繁 緒緖绪 緓绬 緔绱鞝 緗缃 緘缄 緙缂 緝缉 緞缎 締缔 緡缗 緣縁缘 緥褓褴 緦缌 編编 緩缓 緬缅 緯纬 緰𦈕 緱缑 練练練 緶缏 緷𦈉 緸𦈑 緹缇 緻致 緼縕缊 縈萦 縉缙 縊缢 縋缒 縎𦈔 縑缣 縗缞 縛缚 縝缜 縞缟 縦縱纵 縫缝 縬𦈚 縭缡褵 縮缩 縲缧 縵缦 縷缕縷 縹缥 縺𦈐 績绩 繅繰缫缲 繆缪 繈繦襁 繏𦈝 繒缯 繓𦈛 織织 繕缮 繙翻飜 繚缭 繞绕遶 繟𦈎 繭茧 繮缰韁 繯缳 繳缴 繹绎 繻𦈡 繽缤 繾缱 纁𫄸 纇颣 纈缬 纉纘缵 纏纒缠 纓缨 缽鉢钵 罅𨻲 罘罦 罚罰罸 罢罷 罥羂 罪辠 罴羆 罶羀 罹罹 羁羈覊羇覉 羋芈 羌羗 美羙 羓豝 羖𦍩 羚羚 羟羥 羡羨 羣群 羮羹 羴羶 羽羽 翄翅 翆翠 翘翹 翙翽 翚翬 翱翶翺 老耂老 耇耈耉 耏耐 耙鈀钯 耡鋤鉏锄 耢耮 耧耬 耨鎒 耸聳 耼聃 聂聶 聆聆 聋聾聾 职職軄 聍聹 联聨聯聫聮聯 聝馘 聞闻 聡聦聪聰 聩聵 聻魙 聿肀 肇肈 肋肋 肐胳𩨘 肕韌韧靭靱 肠腸膓 股脵𦙶 肢胑 肤膚 肧胚 肨胮 肮骯 肯肻 肴餚 肾腎 胁脅脇 胆膽 胓𦚓 胔骴𦙼 胝郅 胞脬 胨腖 胪臚顱髗颅 胫脛 胭臙 胯骻 胶膠 胼腁 脃脆 脍膾鱠鲙 脏臟髒臓 脐臍 脓膿 脔臠 脚腳 脥𣍰 脫脱 脶腡 脸臉 腊臈臘臘 腕𦙵 腘膕 腟膣 腢髃 腪𣍯 腭齶 腮顋 腻膩 腼覥靦觍 腽膃 腾駦騰 腿骽 膋膫 膑臏髕髌 膘臕 膢𦝼 膳饍 膸髓髄 臇𤎱 臊𦞣 臗𣎑 臜臢 舃舄 舆輿轝 舐舓 舔餂 舖鋪铺舗 舘館馆館 舡舩船 舣艤 舦艜 舰艦 舱艙 舶艊 良良 艰艱 艳艷豔艶 艶豓 艸艹草 艽韭韮 芊茜 芗薌 芘萆蓖蔽菝 芜蕪 芟𠚹 芦蘆蘆 花蘤 芸蕓 苁蓯 苇葦 苈藶 苋莧 苌萇 苍蒼 苑菀 苟茍 苡苢 若若 苹蘋 苺莓 苽菇菰𦱄 苿菋 茎莖 茏蘢 茑蔦 茠薅 茶茶 荆荊 荇莕 荍荞蕎 荐薦 荙薘 荚莢 荛蕘 荜蓽 荝萴 荟薈 荠萕薺 荤葷 荨蕁 荩藎 荪蓀 荬蕒 荭葒 荮葤 药葯薬藥 荳豆 荽萎 莆蒲 莜蓧 莱萊 莲蓮蓮 莳蒔 莴萵 莵菟 莶薟蘞蔹 莸蕕 莺鶯鸎鴬 莼蒓蓴 菉菉 菌蕈 菔蔔 菱菱 菻蔴麻 萌萠 萚蘀 萝蘿蘿 萤蛍螢 萧蕭 萨薩 萱萲 萼蕚 落落 葱蔥 蒇蕆 蒋蔣 蒌蔞 蒍蔿 蓝藍藍 蓟薊 蓠蘺 蓣蕷 蓥鎣 蓦驀 蓼蓼 蔂虆 蔵藏 蔷薔 蔺藺藺 蔼藹 蕊蕋蘂 蕰薀 蕲蘄 蕴蘊藴 薫薰 薯藷 藇𨣦 藓蘚 藟蘽 藦蘑 蘏蘔 蘒蘒 虚虛 虞𩦢 虫蟲 虬虯蚪 虮蟣 虱蝨 虺蝰 虽雖 虾蝦鰕 虿蠆 蚀蝕 蚁螘蟻 蚂螞 蚃蠁 蚊螡蟁 蚋蜹 蚓螾 蚕蠶 蚝螆蛓 蚦蚺 蚬蜆 蛄蛌 蛆𧐅 蛊蠱 蛎蠣 蛏蟶 蛗𧌓 蛙鼃 蛛鼄 蛮蠻 蛰蟄 蛱蛺 蛲蟯 蛳螄 蛴蠐 蛻蜕 蜂蠭 蜇𧋍 蜋螂 蜍蠩 蜗蝸 蜘鼅 蜝蜞 蜨蝶 蜱螵 蜶蟀 蜺霓 蝇蠅蝿 蝈蟈 蝉蟬 蝎蠍 蝥蟊 蝼螻 蝾蠑 螀螿 融螎 螗螳 螙蠧蠹 螨蟎 螺蠃螺 蟆蟇 蟏蠨 蟒蠎 蟚蟛 蟮蟺 蟹蠏 蠔𧐢 衂衄 衅釁 行行 衣衤 补補 表錶 衮袞 衽袵 袆褘 袒襢 袖褎褏 袜襪韈韤 袭襲 袯襏 袷裌 裂裂 装裝 裆襠 裈褌 裉褃 裏裡里里裏裡 裢褳 裣襜襝 裥襉 裴裵 裸躶裸 褒襃 褛褸 褢褱 襀𫌀 襾西覀 覇霸 見见見 覌觀观観 覎觃 覓覔觅 覙覼𫌨 覡觋 覦觎 覧覽览 覬觊 覯觏 覰覷觑 覲觐 覵覸 覿觌 觞觴 解觧 觥觵 触觸 觯觶 言訁讠 訂订 訃讣 計计 訊讯 訌讧 討讨 訐讦 訑𫍙 訒讱 訓训 訕讪 訖讫 記记 訚誾 訛譌讹 訝讶 訟讼 訣诀 訦諶谌 訩詾讻 訪访 設设 許许 訳譯译 診诊 証證证 訽詬诟 詀𧮪 詁诂 詆诋 詎讵 詐诈 詑𫍟 詒诒 詔诏 評评 詖诐 詗诇 詘诎 詛诅 詞词 詟讋 詡诩 詢询 詣诣 詤謊谎 試试 詩诗 詫诧 詭诡 詮诠 詰诘 該该 詳详 詶酬酧醻 詼诙 詿诖 誄诔 誅诛 誆诓 誉譽 誊謄 認认 誑诳 誚譙诮谯 語语 誠诚 誡诫 誣诬 誥诰 誦诵 誨诲 說説说說說 読讀读讀 誰谁 課课 誶谇 誹诽 誼谊 調调 諂谄 諄谆 談譚谈谭 諉诿餵 諊鞫 請请 諌諫谏 諍诤 諏诹 諑诼 諒谅諒 論论論 諗谂 諛谀 諜谍 諝谞 諞谝 諡謚谥 諢诨 諤讍谔 諦谛 諧谐龤 諩譜谱 諭谕 諰𫍰 諱讳 諳谙 諷讽 諸诸諸 諺谚 諼谖 諾诺諾 謀谋 謁谒 謂谓 謅诌 謎谜 謏𫍲 謐谧 謔谑 謖谡 謗谤 謙谦 講讲 謝谢 謠謡谣 謨谟 謫讁谪 謬谬 謭譾谫 謳讴 謹谨 謾谩 譊𫍢 譏讥 譖谮 識识識 譫谵 議议 譲讓让 譴谴 譸诪 讃讚 讅谉 讆讏 讒谗 讕谰 讖谶 讜谠 讞谳 豘豚 豜豣 豮豶 豴蹢 貊貘 貝贝 貞贞 貟贠 負负 貢贡 貧贫 貨货 販贩𧶶 貪贪 貫贯 責责 貭質质 貯贮 貰贳 貲赀 貴贵 貶贬 貸贷 貺贶 費费 貼贴 貽贻 貿贸 賀贺 賁贲 賂赂賂 賃赁 賄贿 資资 賈贾賈 賍贓贜赃 賑赈 賒赊 賕赇 賙赒 賚赉 賛贊赞 賜赐 賞赏 賟𧹖 賠赔 賡赓 賢贒贤 賤贱 賦赋 賧赕 賫赍齎 賭赌 賮贐赆 賴赖頼 賵赗 賺贃赚𧹗𧸖 賻赙 購购 賽赛 賾赜 贄贽 贅赘 贇赟 贈赠 贍赡 贏赢 贔赑 贖赎 贛赣 赤𤆍 走赱 赵趙 赶趕 趁趂 趄跙 趋趨 趒跳 趮躁 趯跃躍 趱趲 趸躉 跖蹠 跞躒 跡蹟迹 跥跺 路路 跴踹 践踐 跶躂 跸蹕 跹蹮躚 跻躋隮 踊踴 踌躊 踏蹋蹹 踨踪蹤 踬躓 踯躑 踰逾 蹄蹏 蹑躡 蹒蹣 蹧遭 蹰躕 蹴蹵 蹿躥 躏躪 躗躛 躜躦 躝𨅬 躬躳 躯軀 躱躲 軉𨉗 車车車 軋轧 軌轨 軏𫐄 軑轪 軒轩 軔轫 軗𨐅 軛轭 軟輭软 転轉转 軣轟轰 軤轷 軨𫐉 軫轸 軰輩辈 軲轱 軸轴 軹轵 軺轺𨍳 軻轲 軼轶 軽輕轻 軾轼 軿輧 較较 輄𨐈 輅辂 輇辁 輈辀 載载 輊轾 輌輛辆 輒輙辄 輔辅 輗𫐐 輜辎 輞辋 輟辍 輥辊 輦辇輦 輪轮輪 輬辌 輮𫐓 輯辑 輳辏 輵轕 輸输 輻辐輻 輼轀辒 輾辗 轄辖鎋 轅辕 轍辙 轎轿 轔辚 轡辔 轢轹轢 轣𫐆 轤轳 辞辤辭 辟避 辢辣 辫辮 辰辰 辵辶 边邊辺邉 辽遼遼 达達逹 迁遷 迂遇 过過 迈邁 运運 还還 这這 进進 远逺遠 违違 连連連 迟遅遲遟 迥逈 迨逮 迩邇 迯逃 适適 选選 递逓遞 逖逷 逦邐 逸逸 逻邏邏 遗遺 遙遥 邑阜阝 邓鄧 邕雍𪪝 邝鄺 邢郉 邮郵 邹鄒 邺鄴 邻鄰隣隣 郄郤隙 郎郞郎 郏郟 郐鄶 郑鄭 郓鄆 郦酈 郧鄖 郰鄹 郸鄲 都都 鄷酆 酂酇 酔醉 酖鴆鸩 酝醞醖 酢醋 酦醱醗 酪酪 酱醬醤 酽釅 酾釃 酿醸釀 醊餟 醴醴 釈釋释 量量 金釒钅金 釓钆 釔钇 釕钌 釗钊 釘钉 釙钋 釜釡 釣钓 釤钐 釧钏 釩钒 釬銲 釳𨰿 釵钗 釷钍 釹钕 釺钎 鈁钫 鈃钘 鈄钭 鈆鉛铅 鈇𫓧 鈈钚 鈉钠 鈋𨱂 鈍钝 鈎鉤钩 鈐钤 鈑钣 鈒钑 鈔钞 鈕钮 鈞銁钧 鈠𨱁 鈡鍾鐘钟锺 鈣钙 鈥钬 鈦钛 鈧钪 鈬鐸铎 鈮铌 鈯𨱄 鈰铈 鈲𨱃 鈳钶 鈴铃鈴 鈷钴 鈸钹 鈹铍 鈺钰 鈽钸 鈾铀 鈿钿 鉀钾 鉁𨱅 鉄銕鐵铁鐡 鉉铉 鉍铋 鉑铂 鉕钷 鉚铆 鉦钲 鉬钼 鉭钽 鉴鑑鑒 鉶铏 鉸铰 鉺铒 鉻铬 鉿铪 銀银 銃铳 銅铜 銍铚 銑铣 銓铨 銖铢 銘铭 銚铫 銛铦 銠铑 銣铷 銥铱 銦铟 銨铵 銩铥 銪铕 銫铯 銬铐 銭錢钱 銮鑾 銱铞 銳鋭锐 銶𨱇 銷销 銹鏥鏽锈 銻锑 銼锉 鋁铝 鋃锒 鋄錽 鋅锌 鋇钡 鋉𨱈 鋌铤 鋏铗 鋑鐫镌鑴 鋒锋 鋙铻 鋝锊 鋟锓 鋣铘 鋥锃 鋦锔 鋨锇 鋩铓 鋮铖 鋯锆 鋰锂 鋱铽 鋳鑄铸 鋶锍 鋸锯 鋼钢 錁锞 錂𨱋 錆锖 錇锫 錈锩 錏铔 錐锥 錒锕 錕锟 錘鎚锤 錙锱 錚铮 錛锛 錟锬 錠锭 錡锜 錦锦 錨锚 錩锠 錫锡鍚钖 錮锢 錯错 錳锰 錸铼 錾鏨 鍀锝 鍃锪 鍄𨱉 鍆钔 鍇锴 鍈锳 鍊鍊 鍋锅 鍍镀 鍔锷 鍘铡 鍚钖 鍠锽 鍤锸 鍥锲 鍩锘 鍫鍬锹 鍮𨱎 鍰鐶锾镮 鍵键 鍶锶 鍺锗 鎂镁 鎄锿 鎇镅 鎊镑 鎏鏐镠 鎖鎻鏁锁 鎘镉 鎛镈 鎝𨱏 鎡镃 鎢钨 鎦镏 鎧铠 鎩铩 鎪锼 鎬镐 鎭鎮镇 鎯𨱍 鎰镒 鎲钂镋 鎳镍 鎵镓 鎶鿔 鎷𨰾 鎿镎 鏃镞 鏆𨱌 鏇镟 鏈链 鏉𨱒 鏌镆 鏍镙 鏑镝 鏗铿 鏘锵 鏜镗 鏝镘 鏞镛 鏡镜 鏢鑣镖镳 鏤镂 鏦𫓩 鏵铧 鏷镤 鏹镪 鏾𠜎 鐃铙 鐄𨱑 鐋铴 鐍𫔎 鐎𨱓 鐏𨱔 鐐镣 鐒铹 鐓镦 鐔镡 鐙镫 鐠镨 鐦锎 鐧锏 鐨镄 鐲镯 鐳镭 鐺铛 鐿镱 鑊镬 鑌镔 鑔镲 鑕锧 鑞镴 鑠铄 鑥镥 鑭镧 鑰钥 鑱镵 鑲镶 鑷镊 鑹镩 鑼锣 钁镢 長长 門门 閂闩 閃闪 閆閻闫阎 閇閉闭 閈闬 閌闶 閍𨸂 閎闳 閏闰 閐𨸃 閑闲 間间 閔闵 閘闸 閙闹鬧 閡阂 閣阁 閥阀 閨闺 閩闽 閫阃 閬阆 閭闾閭 閱閲阅 閶阊 閼阏 閽阍 閾阈 閿阌 闃阒 闈闱 闋阕 闌阑 闍阇 闐阗 闒阘 闓闿 闕阙 闖闯 闞阚 闠阓 闡阐 闤阛 闥闼 阋鬩 队隊 阧陡 阮阮 阴陰隂 阵陣𨸬 陀陁 际際 陆陸陸 陇隴 陈陳 陉陘 陋陋 陏隋 陥陷 陧隉 陵陵 隆隆 随隨 隧𡑞 隩𡒃 隲騭骘 隶隷隸隸 隼鵻鶽 隽雋 难難 雁鳫鴈 雏雛鶵 雞鳮鶏鷄鸡 雱霶 雳靂 零零 雷雷 雾霧 霁霽 霡霢 霭靄 露露 靑青 靓靚靜静 靖靖 面麪麵麺麫 靥靨 靧頮颒 靴鞾 鞀鞉鼗 鞋鞵𩋘 鞌鞍 鞑韃 鞘韒 鞟鞹 鞦鞧 鞯韉 鞲韝 韋韦 韍韨 韓韩 韙韪 韞韫 韲齏齑 韵韻 頁页 頂顶𩠑 頃顷 項项 順顺 頇顸 頉頣頤颐 頊顼 頋顧顾 頌颂 頎颀 頏颃 頑顽 頓顿 頗颇 領领領 頚頸颈 頜颌 頟額额 頡颉 頦颏 頬頰颊 頲颋 頷颔 頹頽颓 頻频 顃𩖖 顆颗 題题 顎颚 顏顔颜 顒颙 顓颛 顙颡 顚顛颠 顢颟 顫颤 顬颥 顳颞 顴颧 颭飐 颯飒 颰𩙥 颶飓 颷𩙪 颸飔 颺飏 颻飖 颾𩙫 飀飗 飃飄飘 飆飙 飈飚 飛飞 食飠饣 飢饑饥 飣饤 飤飼饲飼 飥饦 飦饘𫗴 飨饗 飩饨 飫饇饫 飭饬 飮飲饮 飯飰饭飯 飴饴 飽饱 飾餙饰餝 飿饳 餃饺 餄饸 餅餠饼 餉饟饷 餌饵 餍饜 餎饹 餏饻 餑饽 餓饿 餔𫗦 餕馂 餖饾 餗𫗧 餛餫馄 餞饯 餡馅 餦𫗠 餭𫗮 餳饧 餶馉 餷馇 餸𩠌 餺馎 餼饩 餾馏 餿馊 饁馌 饃馍 饅馒 饉馑 饒饶 饢馕 馚馩 馬马 馳驰 馴驯 馹驲 馿驢驴 駁駮驳 駃𫘝 駅驛驿 駎𩧨 駐驻 駑驽 駒驹 駔驵 駕驾 駘骀 駙驸 駚𩧫 駛驶𩢲 駝駞驼 駟驷 駢騈骈 駧𩧲 駩𩧴 駭骇 駰骃 駱骆駱 駶𩧺 駸骎 駻𫘣 駿骏 騁骋 騂骍 騅骓 騌騣骔鬃 騍骒 騎骑 騏骐 騐驗验験 騒騷骚 騔𩨀 騖骛 騗騙骗 騘驄骢 騚𩨊 騝𩨃 騟𩨈 騠𫘨 騤骙 騨驒 騪𩨄 騫骞 騮骝 騶驺 騸骟 騺驇 騾驘骡 驁骜 驂骖 驃骠 驊骅𦽊 驋𩧯 驌骕 驍骁 驏骣 驕骄 驟骤 驤骧 驥骥 驦骦 驪骊驪 驫骉 骪骫 髅髏 髋髖 高髙 髥髯 髼鬅 鬂鬓鬢𩯭 鬶鬹 魇魘 魉魎 魚鱼 魛鱽 魟鰩鳐𫚉 魢鱾 魥𩽹 魦鯊鲨鯋 魨鲀 魯鲁魯 魴鲂 魺鲄 鮁鲅 鮃鲆 鮄𫚒 鮊鲌 鮋鲉 鮍鲏 鮐鲐 鮑鲍 鮒鲋 鮓鲊 鮚鲒 鮜鲘 鮝鯗鲞 鮞鲕 鮟𩽾 鮦鲖 鮧鯷鳀 鮪鲔 鮫鲛 鮭鲑 鮰𫚔 鮳鲓 鮶鲪 鮸𩾃 鮺鲝 鯀鲧 鯄𩾁 鯆𫚙 鯇鲩 鯉鲤 鯒鲬 鯔鲻 鯕鲯 鯖鲭 鯛鲷 鯝鲴 鯡鲱 鯢鲵 鯤鲲 鯨鲸 鯪鲮 鯫鲰 鯱𩾇 鯴鲺 鯶𩽼 鯽鲫 鯿鳊 鰁鳈 鰂鲗 鰃鳂 鰈鲽 鰉鱑鳇 鰏鲾 鰐鱷鳄 鰒鳆 鰓鳃 鰛鰮鳁 鰜鳒 鰟鳑 鰠鳋 鰣鲥 鰤𫚕 鰥鳏 鰨鳎 鰭鳍 鰱鲢 鰲鳌鼇 鰳鳓 鰵鳘 鰷鲦 鰹鲣 鰺鲹 鰻鳗 鰼鳛 鰾鳔 鱂鳉 鱅鳙 鱇𩾌 鱈鳕 鱉鳖鼈龞 鱒鳟 鱖鳜 鱗鳞鱗 鱘鲟 鱝鲼 鱟鲎 鱣鳣 鱤鳡 鱧鳢 鱨鲿 鱭鲚 鱮𫚈 鱯鳠 鱸鲈 鱺鲡 鳥鸟 鳩鸠 鳲鸤 鳴鸣 鳶鸢 鳷𫛛 鳼𪉃 鴃鵙𫛞 鴇鸨 鴉鵶鸦 鴎鷗鸥 鴒鸰 鴕鸵 鴗𫁡 鴛鸳 鴜𪉈 鴟鸱 鴣鸪 鴦鸯 鴨鸭 鴯鸸 鴰鸹 鴲𪉆 鴳鷃 鴴鸻 鴺鵜鹈 鴻鸿 鴿鸽 鵂鸺 鵃鸼 鵉鸞鸾鸞 鵐鹀 鵑鹃 鵒鹆 鵓鹁 鵚𪉍 鵝鵞鹅 鵠鹄 鵡鹉 鵪鹌 鵬鹏 鵮鹐 鵯鹎 鵲鹊 鵷鹓 鵾鹍 鶂鶃 鶇鸫 鶉鹑 鶊鹒 鶒𫛶 鶓鹋 鶖鹙 鶗𫛸 鶘鹕 鶚鹗 鶡鹖 鶥鹛 鶩鹜 鶬鸧 鶲鹟 鶴鹤鶴 鶹鹠 鶺鹡 鶻鹘 鶼鹣 鶿鹚 鷁鹢 鷂鹞 鷆鷏 鷊鹝 鷓鹧 鷔𪉑 鷖鹥 鷙鸷 鷚鹨 鷥鸶 鷦鹪 鷨𪉊 鷫鹔 鷯鹩 鷲鹫 鷳鹇 鷸鹬 鷹鹰 鷺鹭鷺 鷽鸴 鸇鹯 鸋𫛢 鸌鹱 鸏鹲 鸕鸬 鸘鹴 鸚鹦 鸛鹳 鸝鹂 鹺鹾 鹿鹿 麇麕 麐麟麟 麥麦 麨𪎊 麩麸 麯麴麹 麲𪎉 黃黄 黉黌 黎黎 黑黒 黡黶 黩黷 黪黲 黽黾 黿鼋 鼂鼌 鼉鼍 鼎𪔂 鼠鼡 鼴鼹 齁𪖙 齔龀 齕龁 齗龂 齙龅 齜龇 齟龃 齠龆 齡齢龄 齪龊 齬龉 齲龋 齷龌 龔龚 龕龛 龭𩨎 龯𨱆 鿒鿓 𠂤𣳨 𠆿𠌥 𠉗𠏢 𠚳𠠎 𠛆𠞆 𠱓𠼮 𠱘𠸺 𠲥𡅏 𠴢𡄔 𠵸𡄣 𡋀𡓾 𡋗𡑭 𡭜𡮉 𡭬𡮣 𢘝𢣚 𢘞𢣭 𢫊𢷮 𢫞𢶫 𢬦𢹿 𢶑𢸣 𣁀𧥙 𣁚𣁟 𣍨𦢈 𣑶𣠲 𣘓𣞻 𣘷𣝕 𣭤𣯴 𣶫𣿉 𣺽𤁣 𤊀𤒎 𤳄𤳸 𤶧𤸫 𥅘𥌃 𥐯𥖅 𥐰𥕥 𥧂𥨐 𥭉𥵊 𥮋𥸠 𥱔𥵃 𥹥𥼽 𥺇𥽖 𥿊𦈈 𦂅𦈒 𦃄𦈗 𦟗𦣎 𦨩𦪽 𧒭𧔥 𧙀𧞪 𧠵𬢍 𧳕𧳟 𧶔𧹓 𧺯﨣 𧿈𨇁 𨀱𨄣 𨁴𨅍 𨂺𨈊 𨃞𨃟 𨄄𨈌 𨅫𨇞 𨈚𨉉 𨊻𨐆 𨎮𨐉 𨏠𨐇 𨏥𨐊 𨤰𨤻 𨥛𨱀 𨧱𨱊 𨫒𨱐 𨬕𨬟 𨮂𨱕 𨳑𨸁 𨳕𨸀 𨴗𨸅 𨵩𨸆 𨵸𨸇 𨶀𨸉 𨶏𨸊 𨶮𨸌 𨶲𨸋 𨷲𨸎 𨸘𨽏 𩎢𩏾 𩏪𩏽 𩓣𩖕 𩗀𩙦 𩘀𩙩 𩘝𩙭 𩘹𩙨 𩘺𩙬 𩙈𩙰 𩚛𩟿 𩚥𩠀 𩚵𩠁 𩛆𩠂 𩛩𩠃 𩜇𩠉 𩜦𩠆 𩜵𩠊 𩝔𩠋 𩞄𩠎 𩞦𩠏 𩟐𩠅 𩠠𩠴 𩡺𩧦 𩢡𩧬 𩢴𩧵 𩢸𩧳 𩢾𩧮 𩣏𩧶 𩣺𩧼 𩤊𩧩 𩤙𩨆 𩤲𩨉 𩤸𩨅 𩥄𩨋 𩥇𩨍 𩥉𩧱 𩥑𩨌 𩧆𩨐 𩬣𩭙 𩬤𩰀 𩯒𩯳 𩲒𩳤 𩵩𩽺 𩵹𩽻 𩶰𩽿 𩶱𩽽 𩷰𩾄 𩸃𩾅 𩸦𩾆 𩿪𪉄 𪀦𪉅 𪀾𪉋 𪁈𪉉 𪁖𪉌 𪂆𪉎 𪃍𪉐 𪃏𪉏 𪄆𪉔 𪄕𪉒 𪇳𪉕 𪋿𪎍 𪔭𪔵 𪘀𪚏 𪘯𪚐 ";
+//--></script>
+<script><!--
+(function(){
+	const parsestr=function(str){
+		const attname=str.attname||"note";
+		const res=[];
+		const arr=str.split("\n");
+		for (var i=0;i<arr.length;i++) {
+			const item=arr[i];
+			const at=item.indexOf("=");
+			if (at>-1) {
+				const obj={id:item.substr(0,at)};
+				obj[attname]=item.substr(at+1);
+				res.push(obj);
+			}
+		}
+		return res;
+	}
+	const combine=function(res,arr){
+		if (typeof arr=="string"){
+			arr=parsestr(arr);
+
+		}
+		for (var i=0;i<arr.length;i++){
+			var item=arr[i];
+			if (typeof item.id=="undefined"){
+				console.error("missing id",item)
+				continue;
+			}
+			if (res[item.id]) {
+				console.error("duplicate id",item.id,res[item.id]);
+			} else {
+				res[item.id]=item;
+			}
+			
+		}
+		return res;
+	}
+	const builddictionary=function(wordsets){
+		var res={};
+		if (wordsets.length==1) {
+			wordsets=[wordsets];
+		}
+		for (var i in wordsets){
+			res=combine(res,wordsets[i]);
+		}
+		return res;
+	}
+	const breakstringtoid=function(str,id2){
+		if (str.substr(0,1)=="#") {
+			const items=str.split("#");
+			items.shift();
+			if(items[items.lenght-1]=="")items.pop();
+			return items;
+		}
+		return [str];
+	}
+	const buildinvertindex=function(dictionary,forwardindex){
+		var res={};
+		for (var id in forwardindex){
+			const children=forwardindex[id];
+			for (var id2 in children) {
+				if (!res[id2]) res[id2]={};
+				if (!res[id2][id]) res[id2][id]=0;
+				res[id2][id]++;
+			}
+		}
+		return res;
+	}
+	const unknown={};
+	
+	//const regex_inlinelink=new RegExp("#(.+?);","g");
+
+	const regex_inlinelink=/#(.+?);/g
+	const buildforwardindex=function(dictionary){
+		const res={};	
+		for (var id in dictionary){
+			const obj=dictionary[id];
+			for (att in obj){
+				var tocheckid=false;
+				if (att=="id")continue;
+				const t=typeof obj[att];
+				items=obj[att];
+				if (t=="string") {
+					if (items[0]!=="#") {
+						var s=obj[att].replace(/&/g,"&amp;");
+						obj[att]=s.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+						items=[];
+						
+						obj[att].replace(regex_inlinelink,function(m,m1){
+							const at=m1.indexOf("|");
+							if (at>0) m1=m1.substr(0,at);
+							items.push(m1);
+						});
+					} else {
+						items=breakstringtoid(obj[att],id);
+						if (obj[att][0]=="#") tocheckid=true;						
+					}
+
+				}
+
+				for (var i in items) {
+					const str=items[i];
+					if (typeof dictionary[str]!=="undefined"){
+						if (!res[id]) res[id]={};
+						if (!res[id][str]) res[id][str]=0;
+						res[id][str]++
+					} else {
+						if (tocheckid) {
+							unknown[str]=id;
+						}
+					}
+				}
+			}
+		}
+		return res;
+	}
+	const getrequirefield=function(typedef){
+		var res={};
+		for (var attr in typedef) {
+			var attrdef=typedef[attr];
+			for (var key in attrdef) {
+				if (key=='req' && attrdef[key]) res[attr]=true;
+			}
+		}
+		return res;
+	}
+	const validatedictionary=function(dict,typedef,requirefield){
+		const invalidentries=[];
+		for (var id in dict){
+			for (var reqs in requirefield){
+				if (!dict[id][reqs]) {
+					invalidentries.push([id,'missing '+reqs]);
+				}
+			}
+		}
+		return invalidentries;
+
+	}
+	const build=function(wordsets,config){
+
+		const dict=builddictionary(wordsets);
+		const requirefield=getrequirefield(config.typedef);
+		const invalidentries=validatedictionary(dict,config.typedef,requirefield);
+		const forwardindex=buildforwardindex(dict);
+
+		return {
+			dict:dict,
+			wordcount:Object.keys(dict).length,
+			unknown:unknown,
+			invalidentries:invalidentries,
+			requirefield:requirefield,
+			unknowncount:Object.keys(unknown).length,
+			forward:forwardindex,
+			invert:buildinvertindex(dict,forwardindex)
+		}
+	}
+	const toToken=function(q){
+		var out=[],i=0;
+		while (i<q.length){
+			var c=q.charCodeAt(i);
+			if (c>=0xd800&&c<=0xdbff) {
+				out.push(q[i]+q[i+1]);
+				i++;
+			} else {
+				out.push(q[i]);
+			}
+			i++;
+		}
+		return out;
+	}
+	const expandVar=function(s){
+		//expand a cjk to variants reg 
+		// “涅槃” = “涅[盘盤槃]”
+		const tokens=toToken(s);
+
+		const out=[];
+		tokens.forEach(function(tk){
+			const at=cjkvar.indexOf(tk);
+			if (at<0) {
+				out.push(tk);
+			}else {
+				var s=at;e=at+1;
+				while (s>0&&cjkvar[s]!=" ")s--;
+				while (e<cjkvar.length-1&&cjkvar[e]!=" ")e++;
+				const m=cjkvar.substring(s+1,e);
+				out.push("["+m+"]");
+			}
+		})
+		return out.join("");
+	}
+	const dosearch=function(s,regex,tofindlen){
+		var score=0,doclen=s.length;
+		
+		s.replace(regex,function(){
+			score+=tofindlen/doclen;
+			if (tofindlen==doclen) {
+				score*=3;//完全符合 加權
+			}
+		});
+		return score;
+	}
+	const search=function(dataset,tofind,tofindregex){
+		tofind=tofind.trim();
+		if (!tofind)return[];
+		const dict=dataset.dict;
+		var res=[];
+		var tofindlen=tofind.length;
+
+		for (var id in dict) {
+			var weight=0;
+			var objscore=0;
+			const obj=dict[id];
+			for (var k in obj) {
+				if (k=="id")continue;
+				const v=obj[k];
+				if (typeof v!=="string") continue;
+				if (v.substr(0,1)=="#") continue;//do not scan id
+
+				const score=dosearch(v,tofindregex,tofindlen);
+				objscore+=score;
+				if (score>0) weight++;
+			}
+			objscore*=weight;
+			if (objscore) {
+				res.push([id,objscore]);
+			}
+		}
+		res.sort(function(a,b){return b[1]-a[1]});
+		return res;
+	}
+	const exporting={build:build,search:search,toToken:toToken,
+		expandVar:expandVar}
+	if (typeof module!=="undefined") {
+	  module.exports=exporting;
+	} else {
+		window.builder=exporting;
+	}
+})();
+//--></script>
+<script><!--
+(function(){
+const gettitle=function(obj,key,opts){;
+	if (!obj) return false;
+	var def=obj.title;
+	if (def&&def[opts.language]) def=def[opts.language];
+	
+	if (!def) def=obj[opts.language];
+	var at=def?def.indexOf("|"):-1;
+	if (at>-1){
+		def=def.substr(0,at);
+	}
+	if (!def) def=key;
+	return def;
+}
+
+const closenode=function(obj,id,parentid){
+	setTimeout(function(){
+		const repl=obj.parentNode.parentNode.parentNode;
+		repl.outerHTML=renderlink(api.dataset.dict,id,parentid,api.options);
+	},0);	
+}
+const opennode=function(obj,id,parentid){
+	var opts=Object.assign({parentid:parentid},api.options);
+	var res="<div class=nesting>";
+	res+=rendernodecontrol(id,opts);
+	res+=rendernode(api.dataset.dict,id,opts);
+
+	res+="</div>";
+	obj.parentNode.innerHTML=res;
+}
+
+const movetop=function(obj,id){
+	var arr=document.location.hash.split("#");
+	if (!arr[0])arr.shift();
+	const top=arr[0]||"";
+	var out=[];
+	for (var i=0;i<arr.length;i++) {
+		if (arr[i]!=id && arr[i]) out.push(arr[i]);
+	}
+	if (top!==id) out.unshift(id);
+	document.location.hash="#"+out.join("#");
+}
+const rendernodecontrol=function(id,opts){
+	var res= "<div class=nodecontrol>";
+
+	res+="<span class=closebutton onclick=api.closenode(this,'"
+		+id+"','"+opts.parentid+"')></span>";
+	res+="</div>";
+	return res;
+}
+
+const renderlink=function(dict,id,parentid,opts){
+	var title="";
+	var at=id.indexOf("|");
+	if (at>0) {
+		title=id.substr(at+1);
+		//uid=id.substr(0,at);
+	} else {
+		title=gettitle(dict[id],id,opts);
+	}
+
+	const linkclasses=[opts.linkclass||"nodelink"];
+	const unknownlinkclass=opts.unknownlinkclass||"unknownlink";
+
+	if (id==opts.parentid) linkclasses.push("backref");
+	var res= "<span>";
+	res+=title?"<span class='"+linkclasses.join(" ")+
+				"' onclick=api.opennode(this,'"+id+"','"+
+				parentid+"')>"+title+"</span>"
+			 : "<span class="+unknownlinkclass+">"+id+"</span>";
+	res+="</span>"
+	return res;
+}
+
+const renderlinks=function(dict,links,parentid,opts){
+	var count=0;
+	var res="";
+	for (var i=0;i<links.length;i++){
+		var id=links[i];
+		if (parentid==id)continue;
+		if (opts.homepage==id)continue;
+		if (count) res+="<span class="+(opts.linksepclass||"")+"></span>";
+		count++;
+		res+= renderlink(dict,id,parentid,opts);
+	}
+	
+ 	res="<div class="+(opts.linksclass||"")+">"+res;
+	res+='</div>';
+	return res;
+}
+const regex_inlinelink=/#(.+?);/g
+//const regex_inlinelink=new RegExp("#(.+?);","g");
+const rendertextwithlink=function(str,dict,opts){
+	if (opts.tofind) { //break into pieces
+		const arr=[];
+		var at=0;
+		str.replace(regex_inlinelink,function(m,m1,cur){
+			arr.push( str.substring(at,cur));
+			arr.push( renderlink(dict,m1,"",opts));
+			at=cur+m.length;
+		});
+
+		arr.push(str.substr(at));
+		var out=[];
+		for (var i=0;i<arr.length;i++){
+			if (arr[i][0]=="<") {
+				out.push(arr[i]);
+				continue;
+			}
+			var highlighted=arr[i];
+			if (opts.tofind) {
+				highlighted=highlighted.replace(opts.tofindregex,function(m){
+					return "<span class=hl>"+m+"</span>"
+				});
+				out.push(highlighted);
+			}
+		}
+		return out.join("");
+	} else {
+
+		return str.replace(regex_inlinelink,function(m,m1){
+			return renderlink(dict,m1,"",opts);
+		})
+	}
+}
+
+const renderstring=function(dict,id,str,opts){
+	var res="";
+	if (str.substr(0,1)=="#") {
+		const links=str.split("#");
+		links.shift();
+		for (var i in links){
+			res+=renderlink(dict,links[i],id,opts)+ " ";
+		}
+	} else {
+		const s=rendertextwithlink(str,dict,opts);
+		return (opts.valuecls)?"<span class="+opts.valuecls+">"+s+"</span>"
+							:s;
+	}
+	return res;
+}
+const defhandler=function(dict,id,att,opts){
+	var res="",item=dict[id][att];
+	const type=typeof dict[id][att];
+	const attr=opts.typedef[att];
+	const attrname=gettitle(attr,id,opts)||"";
+	if (!attr){
+		console.warn("unknow attribute type",att);
+		return "";
+	}
+
+	const options=Object.assign({valuecls:attr.valuecls},opts);
+	if (type=="string") {
+
+		if (options.title==item&&opts.language==att) return ""; //already used as title
+		if (dict[id][att]==" ") {
+
+			return "";//empty place holder
+		}
+		res+=attrname?"<span class="+(attr.cls||"attr")+">"+attrname+"</span>"
+		             :"<span>";
+		res+=renderstring(dict,id,dict[id][att],options);
+		res+="</span>";
+	} else if (type=="object") {
+		res+=attrname?"<span class="+(attr.cls||"attr")+">"+attrname+"</span>"
+		             :"";
+		res+="<span>";
+		for (var i in item){
+			res+=renderstring(dict,id,item[i],options);
+		}
+		res+="</span> ";
+	}
+	return res;
+}
+
+const rendervalue=function(dict,id,att,opts){
+	var res="";
+	const handler=defhandler;
+	res=handler(dict,id,att,opts);
+	return res;
+}
+
+const renderattributes=function(dict,id,opts){
+	var res="";
+	for (var att in dict[id]){
+		if (att=="id")continue;
+		res+=rendervalue(dict,id,att,opts);
+	}
+	return res;
+}
+const getbacklinks=function(id){
+	const out=[];
+	const forward=api.dataset.forward;
+	for (var key in api.dataset.invert[id]){
+		if (!forward[id]||typeof forward[id][key]=="undefined") {
+			out.push(key);
+		}
+	}
+
+	return out;
+}
+const rendernode=function(dict,id,opts,first){
+	const at=id.indexOf("|");
+	if(at>0) id=id.substr(0,at);
+
+	if (!dict[id]) return "<span class=unknown>? "+id+"</span>";
+
+	const firsttitle=first?" firsttitle":"";
+	var res="<span class='title"+firsttitle+
+			"' onclick=api.movetop(this,'"+id+"') "+
+			" title=#"+id+">";
+	var title=gettitle(dict[id],id,opts);
+	const renderedtitle=title.replace(opts.tofindregex,function(m){
+		return "<span class=hl>"+m+"</span>"
+	});
+
+	res+=renderedtitle+"</span>";
+	res+=renderattributes(dict,id,Object.assign({title:title},opts));
+
+	const linksopts=Object.assign({
+		linkclass:"backlink",linksclass:"backlinks",linksepclass:"linksep"
+},opts);
+	res+=renderlinks(dict,getbacklinks(id),id,linksopts);
+	return res;
+}
+const clearall=function(){
+	document.location.hash="";
+}
+const showunknownnode=function(obj,id,parentid){
+	setTimeout(function(){
+		clearall()
+		movetop(obj,id);
+	},1);
+}
+const renderunknownlinks=function(unknown){
+	var res=[];
+
+	for (i in unknown){
+		res.push("<span class=backlink onclick=api.showunknownnode(this,'"+
+			unknown[i]+"','"+i+"')>"+i+"</span>");
+	}
+	return res.join(" ");
+}
+const rendermain=function(opts){
+	var res="";
+	var pages=(typeof opts.pages=="string")?[opts.pages]:opts.pages;
+	for (var i in pages) {
+		res+="<div class=node>"
+		res+=rendernode(opts.dataset.dict,pages[i],opts,i==0);
+		res+="</div>";
+	}
+	return res;
+}
+const rendersearch=function(sr,tf) {
+	var res=[];
+	if (!sr.length && tf) return "Not found 找不到"
+	for (i=0;i<sr.length;i++){
+		const id=sr[i][0],score=sr[i][1];
+		res.push("<span class=backlink onclick=api.movetop(this,'"+
+			id+"')>"+gettitle(api.dataset.dict[id],id,api.options)+"</span>");
+	}
+	return res.join("|");
+}
+const exporting={rendermain:rendermain,
+	rendersearch:rendersearch,
+	renderunknownlinks:renderunknownlinks,
+	movetop:movetop,opennode:opennode,closenode:closenode,
+	showunknownnode:showunknownnode
+}
+if (typeof module!=="undefined") {
+	module.exports=exporting;
+} else {
+	window.renderer=exporting;
+}
+})();
+//--></script>
+<script><!--
+(function(){
+const coreset=[
+
+{id:"homepage",
+	attr:"#buddha#dhamma#sangha#patimokkha#mnemonic#editing"
+	,zh:"首頁",en:"homepage",pli:"-"
+},
+{id:"patimokkha",zh:"巴帝摩卡",pli:"paṭimokkha"},
+{id:"editing",zh:"編輯中",en:"editing",content:"buffer problem!!!#kamavacaracitta;aaa",en:"-",pli:"-"},
+{id:"buddha",zh:"佛",en:"Buddha",pli:"buddha"},
+{id:"dhamma",
+	en:"dhamma",
+	zh:"法",
+	types:"#4ariyasacca#paticcasamuppada#24paccayo#paramattha",
+	pli:"dhamma"
+},
+{id:"sangha",zh:"僧",en:"Sangha",pli:"saṅgha"},
+{id:"mnemonic",zh:"口訣",en:"mnemonic",pli:"-"},
+{id:"2sangha",zh:"二種僧"
+	,has:"#sammutisangha#ariyasangha"
+	,classification:"#sangha"},
+{id:"sammutisangha",zh:"世俗僧伽",has:"#sammuti",pli:"sammuti"},
+{id:"ariyasangha",zh:"聖者僧伽",has:"#ariya",en:"noble sangha",pli:"ariya"},
+{id:"nibbana",zh:"涅槃",en:"enlightenment",pli:"nibbana"},
+
+{id:"samadhi",zh:"定|三昧|三摩地|等持",en:"concentration",pli:"samādhi"},
+{id:"samapatti",zh:"等至",en:"attainment",pli:"samāpatti"},
+{id:"anapanasati",zh:"入出息念",en:"mindfullness of breathing",pli:"ānāpānasati"},
+{id:"samatha",zh:"止|奢摩他",en:"serenity",pli:"samatha"},
+{id:"vipassana",zh:"觀",en:"insight",pli:"vipassana"},
+{id:"kasina",zh:"遍相",en:"kasina",pli:"ānāpānasati"},
+{id:"loka",zh:"世間",en:"mundane",pli:"loka",types:"#kamaloka#rupaloka#arupavacara"},
+{id:"37maggavagga",zh:"37道品",has:"#4satipatthana#4sammappadhana#4iddhipada#5indriya#5bala#7bojjhanga#8magganga",pli:"maggavagga"},
+{id:"4satipatthana",zh:"四念住",has:"#kaya#vedana#citta#dhamma",en:"for foundation of mindfullness",pli:"cattaro satipaṭṭhāna"},
+{id:"4sammappadhana",zh:"四正勤",def:"一斷除已生的惡法；二防止未生的惡法起；三令未生的善法生起；四令已生的善法增長。",en:"four supreme efforts",pli:"sammappadhāna"},
+
+{id:"4iddhipada",zh:"四神足|成就之法",has:"#chanda#viriya#citta#vimamsa",en:"four means to accomplishment",pli:"iddhipāda"},
+
+{id:"vimamsa",zh:"觀察|實驗調查",en:"investigation",pli:"vīmaṃsā"},
+
+
+{id:"5indriya",zh:"五根",has:"#saddha#viriya#sati#samadhi#panna",en:"five faculties",pli:"indriya"},
+{id:"5bala",zh:"五力",has:"#saddha#viriya#sati#samadhi#panna",en:"five powers",pli:"bala"},
+{id:"7bojjhanga",zh:"七覺支",has:"#sati#dhammavicaya#viriya#piti#passaddhi#samadhi#upekkhanga",en:"seven factors of enlightment",pli:"satta bojjhangā"},
+{id:"dhammavicaya",zh:"擇法",en:"investigation of states",pli:"dhammavicaya",syn:"#panna"},
+{id:"upekkhanga",zh:"捨覺分",syn:"#tatramajjhattata",def:"指中捨性，非捨受。概要精解pg272",en:"equanimity",pli:"-"},
+{id:"8magganga",zh:"八道分",has:"#sammaditthi#sammasankappo#sammavaca#sammakammanta#sammaajiva#sammavayamo#sammasati#sammasamadhi",en:"eight fold path",pli:"aṭṭhamaggaṅga"},
+{id:"sammaditthi",zh:"正見",en:"right view",pli:"sammādiṭṭhi",stem:"#ditthi"},
+{id:"sammasankappo",zh:"正思惟",def:"導向#nekkhamma; #adosa; #alobha; 的#vitakka;",en:"right intention",pli:"sammasaṅkappo"},
+{id:"sammakammanta",zh:"正業",en:"right action",pli:"sammākammanta"},
+{id:"sammaajiva",zh:"正命",en:"right livelihood",pli:"sammāājīva"},
+{id:"sammavayamo",zh:"正精進",syn:"#4sammappadhana",en:"right effort",pli:"sammāvāyāmo"},
+{id:"sammasati",zh:"正念",syn:"#4satipatthana", en:"right mindfullness",pli:"sammasati",stem:"#sati"},
+{id:"sammasamadhi",zh:"正定",def:"依長部22經定義為#suttanta4jhana;",en:"right concentration",pli:"sammāsamādhi",stem:"#samadhi"},
+
+{id:"lokiyacitta",zh:"世間心",en:"mundane consciousness",pli:"lokiyacitta",stem:"#loka"},
+
+{id:"lokuttara",zh:"出世間",anto:"#loka",syn:"#nibbana",en:"supermundane",pli:"lokuttara"},
+{id:"ariya",zh:"聖者",en:"noble one",pli:"ariya",attr:"#nibbana#phala",has:"#sotapanna#sakadagami#anagami#arahant"},
+{id:"sotapanna",title:"須陀洹",zh:"須陀洹|預流果",en:"stream-entry",pli:"sotāpanna"},
+{id:"sakadagami",zh:"斯陀含|一來果",en:"once-returner",pli:"sakadāgāmi"},
+{id:"anagami",zh:"阿那含|不還果",en:"no-returner",pli:"anāgāmi"},
+{id:"arahant",zh:"阿羅漢|阿拉汉",en:"arahant",pli:"arahant"},
+{id:"4ariyasacca",zh:"四聖諦",has:"#dukkhasacca#samudayasacca#nirodhasacca#maggasacca",en:"4 noble truth",pli:"cattāro ariyasacca"},
+{id:"2sacca",zh:"二諦",has:"#sammutisacca#paramatthasacca",pli:"dvesaccāni"},
+{id:"sammuti",zh:"世俗",pli:"sammuti"},
+{id:"sammutisacca",zh:"世俗諦",stem:"#sammuti",has:"#sammuti#pannatti#vohara",pli:"sammutisacca"},
+{id:"sukha",zh:"樂",is:"#vedana",en:"happiness",pli:"sukha"},
+{id:"dukkha",zh:"苦",is:"#vedana",en:"suffering",pli:"dukkha"},
+{id:"samudaya",zh:"集",en:"origination",pli:"samudaya"},
+{id:"nirodha",zh:"滅",en:"cessation",pli:"nirodha"},
+{id:"magga",zh:"道",en:"path",pli:"magga"},
+{id:"phala",zh:"果",en:"fruition",pli:"phala"},
+{id:"anicca",zh:"無常",en:"impermanence",pli:"anicca"},
+{id:"anatta",zh:"無我",en:"non-self",pli:"anatta"},
+{id:"dukkhasacca",stem:"#dukkha",zh:"苦諦",en:"the truth of suffering",pli:"dukkhasacca"},
+{id:"samudayasacca",stem:"#samudaya",zh:"集諦",en:"the truth of origination",pli:"samudayasacca"},
+{id:"nirodhasacca",stem:"#nirodha",zh:"滅諦",en:"the truth of cessation",pli:"nirodhasacca"},
+{id:"maggasacca",stem:"#magga",zh:"道諦",en:"the truth of the Path",pli:"maggasacca",has:"#37maggavagga"},
+
+{id:"pannatti",zh:"概念",en:"concept",pli:"paññātti"},
+{id:"vohara",zh:"表達方式",pli:"vohara"},
+{id:"paramatthasacca",zh:"究竟諦",en:"ultimate truth",pli:"parāmaṭṭha sacca",
+has:"#paramattha"},
+{id:"3ratana",zh:"三寶",	en:"triple Gem",pli:"Tiratana",has:"#buddha#dhamma#sangha"},
+{id:"paramattha",zh:"究竟法",en:"ultimate reality",pli:"paramatta",	has:"#lakkhana#rasa#paccupatthana#padatthana",stem:"#parama#attha",source:"《概要精解》p4"
+},
+{id:"indriya",zh:"根",def:"覺知的能力",en:"faculty",pli:"indriya"},
+{id:"lakkhana",zh:"相",en:"characteristic",pli:"lakkhaṇa"},
+{id:"rasa",zh:"作用",amb:"#rasa",en:"function",pli:"rasa"},
+{id:"paccupatthana",zh:"現起",en:"manifestation", pli:"paccupaṭṭhāna"},
+{id:"padatthana",zh:"近因|足處",en:"proximate cause", pli:"padaṭṭhāna"},
+{id:"parama",zh:"勝義",en:"ultimate",pli:"parama"},
+{id:"attha",zh:"道理",pli:"attha"},
+{id:"4paramattha",	zh:"四究竟法",classification:"#paramattha",	has:"#rupa#citta#cetasika#nibbana",en:"-",pli:"-"},
+{id:"5khanda",zh:"五蘊",	pli:"pañcakhaṇḍa",en:"five aggregates",
+	has:"#rupa#vedana#sanna#sankhara#vinnana",    is:"#paramattha"},
+{id:"vedana",zh:"受",en:"feeling",pli:"vedanā"},
+{id:"sanna",zh:"想",en:"perception",pli:"saññā"},
+{id:"sankhara",zh:"行",en:"mental formation",pli:"saṅkhāra"},
+{id:"vinnana",zh:"識",types:"#vinnanadhatu",en:"consciousness",pli:"viññāṇa"},
+
+{id:"dvadasayatana",zh:"十二處",has:"#cakkhu#sota#ghana#jivha#kaya#manayatana#rupayatana#saddha#gandha#rasarammana#photthabba#dhammayatana",en:"twelve sense bases",pli:"dvādasāyatana"},
+{id:"rupayatana",zh:"色處",en:"visible form base",pli:"rūpāyatana"},
+{id:"manayatana",zh:"意處",def:"含所有 89種#citta;",en:"mind base",pli:"manāyatana"},
+{id:"dhammayatana",zh:"法處",has:"#cetasika#sukhuarupa#nibbana",en:"mental object base",pli:"dhammāyatana"},
+
+{id:"sukhuarupa",zh:"微細色",def:"16種，概要精解pg284",en:"subtle material phenomena",pli:"sukhumarūpa"},
+
+{id:"18dhatu",zh:"18界",def:"將#dvadasayatana;中的#manayatana;分為#vinnanadhatu;，即得十八處。",en:"eighteen elements",pli:"aṭṭhārasadhātu"},
+
+{id:"mano",zh:"意",en:"mind",pli:"mana"},
+{id:"citta",zh:"心",en:"mind",pli:"citta",lakkhana:"vijanana",	rasa:"pubbangama",	paccupatthana:"sandhana",	padatthana:"#namarupa"
+,classification:"#catubbhidhacitta",def:"1)作為造作者，心是識知目標者（ ārammaṇaṁ cintetī ti cittaṁ, 2)作為工具，與心相應的心所通過心而得以識知目標（etena cintentī ti cittam）3)作為活動，心純粹只是識知的過程（cintanamattaṁ cittaṁ）。"},
+{id:"catubbhidhacitta",zh:"四種心",has:"#kamavacaracitta#rupavacaracitta#arupavacaracitta#lokuttaracitta",en:"4 types of consciousness",pli:"catubbhidha citta"},
+{id:"kamavacaracitta",zh:"欲界心",stem:"#kamavacara",en:"sense-sphere consciousness",pli:"kāmāvacara citta",types:"#12akusakacitta#18ahetukacitta#24kamavacarasobhanacitta",def:"共54個"},
+{id:"rupavacaracitta",zh:"15色界心",is:"#mahaggatacitta",stem:"#rupavacara",en:"fine-material consciousness",pli:"rūpāvacara citta",has:"#5rupavacarakusalacitta#5rupavacaravipakacitta#5rupavacarakiriyacitta"},
+{id:"5rupavacarakusalacitta",zh:"5色界善心",func:"#javana",stem:"#kusalacitta",has:"#pathamajhana#dutiyajjhana#tatiyajjhana#catuttajjhana#pancamajjhana",en:"sense-sphere wholesome consciousness",pli:"rūpāvacara kusalacitta"},
+
+{id:"pathamajhana",zh:"第一禪",is:"5jhana",syn:"#1jhana",en:"first jhana",pli:"paṭhamajhāna",has:"#vitakka#vicara#piti#sukha#ekaggata"},
+{id:"dutiyajjhana",zh:"第二禪",is:"5jhana",syn:"#2jhana",en:"second jhana",pli:"dutiyajjhāna",has:"#vicara#piti#sukha#ekaggata"},
+{id:"tatiyajjhana",zh:"第三禪",is:"5jhana",syn:"#2jhana",en:"third jhana",pli:"tatiyajjhāna",has:"#piti#sukha#ekaggata"},
+{id:"catuttajjhana",zh:"第四禪",is:"5jhana",syn:"#3jhana",en:"fourth jhana",pli:"catuttajjhāna",has:"#sukha#ekaggata"},
+{id:"pancamajjhana",zh:"第五禪",is:"5jhana",syn:"#4jhana",en:"fifth jhana",pli:"pancamajjhāna",has:"#upekkha#ekaggata"},
+
+{id:"jhana",zh:"禪那",en:"absorption",pli:"jhāna",types:"#suttanta4jhana#5jhana"},
+{id:"5jhana",zh:"五分禪那",content:"savitakka savicāra samādhi; avitakka vicaramatta samādhi; avitakka avicāra samādhi: M.128/iii,162）。尋伺兩者相應之定、尋不相應伺相應之定、尋伺兩者皆不相應之定。概要精解pg43",has:"#vitakka#vicara#piti#sukha#ekaggata",en:"five jhana",pli:"pañca jhāna"},
+{id:"suttanta4jhana",zh:"經教四禪",has:"#1jhana#2jhana#3jhana#4jhana",en:"four jhana in suttanta system",pli:"-"},
+{id:"1jhana",zh:"初禪",en:"first jhana",pli:"paṭhamajhāna"},
+{id:"2jhana",zh:"二禪",has:"#piti#sukha#ekaggata",en:"second jhana",pli:"dutiyajjhāna"},
+{id:"3jhana",zh:"三禪",has:"#sukha#ekaggata",en:"third jhana",pli:"tatiyajjhāna"},
+{id:"4jhana",zh:"四禪",has:"#upekkha#ekaggata",en:"fourth jhana",pli:"catuttajjhāna"},
+
+{id:"5rupavacaravipakacitta",zh:"5色界果報心",function:"#patisandhi",stem:"#vipakacitta",has:"#pathamajhana#dutiyajjhana#tatiyajjhana#catuttajjhana#pancamajjhana",en:"sense-sphere resultant consciousness",pli:"rūpāvacara vipakacitta"},
+{id:"5rupavacarakiriyacitta",zh:"5色界唯作心",func:"#javana",stem:"#kiriyacitta",has:"#pathamajhana#dutiyajjhana#tatiyajjhana#catuttajjhana#pancamajjhana",en:"sense-sphere functional consciousness",pli:"rūpāvacara kiriyacitta"},
+
+{id:"arupavacaracitta",zh:"12無色界心",is:"#mahaggatacitta",has:"#4arupavacarakusalacitta#4arupavacaravipakacitta#4arupavacarakiriyacitta", stem:"#arupavacara",en:"immaterial consciousness",pli:"arūpāvacara citta"},
+{id:"4arupavacarakusalacitta",zh:"4無色界善心",func:"#javana",has:"#akasanancayatanacitta#vinnanancayatanacitta#akincannayatanacitta#nevasannanasannayatanacitta",stem:"#arupavacara#kusalacitta",en:"immaterial wholesome consciousness",pli:"arūpāvacarakusalacitta"},
+{id:"4arupavacaravipakacitta",zh:"4無色界果報心",function:"#patisandhi",has:"#akasanancayatanacitta#vinnanancayatanacitta#akincannayatanacitta#nevasannanasannayatanacitta",stem:"#arupavacara#vipakacitta",en:"immaterial resultant consciousness",pli:"arūpāvacaravipākacitta"},
+{id:"4arupavacarakiriyacitta",zh:"4無色界唯作心",func:"#javana",has:"#akasanancayatanacitta#vinnanancayatanacitta#akincannayatanacitta#nevasannanasannayatanacitta",stem:"#arupavacara#kiriyacitta",en:"immaterial funcional consciousness",pli:"arupavacarakiriyacitta"},
+
+{id:"mahaggatacitta",zh:"廣大心",en:"sublime,lofty or exalted consciousness",pli:"mahaggatacitta"},
+{id:"akasananca",zh:"空無邊",stem:"akasa",en:"boundless space",pli:"ākāsānañca"},
+
+{id:"akincanna",zh:"無所有",en:"nothingness",pli:"ākincaññā"},
+{id:"akasanancayatanacitta",zh:"空無邊處心",arm:" #akasanancayatana;的#pannatti;",def:"超越#kasina;的#pannatti;",en:"consciousness pertaining to the base of infinite space|boundless space",pli:"ākasānañcāyatanacitta"},
+{id:"vinnanancayatanacitta",zh:"識無邊處心",arm:"#akasanancayatanacitta",def:"超越#akasananca;的#pannatti;",en:"consciousness pertaining to the base of boundless consciousness|boundless consciousness",pli:"viññāṇañcāyatanacitta"},
+{id:"akincannayatanacitta",zh:"無所有處心",arm:" #akasananca;的#pannatti;",def:"超越#vinnanancayatanacitta;",en:"consciousness pertaining to the base of nothingness",pli:"ākincaññāyatanacitta"},
+{id:"nevasannanasannayatanacitta",zh:"非想非非想處心",arm:"#akincannayatanacitta",def:" 超越#akincanna;的#pannatti;",en:"consciousness pertaining to the base of neither perception nor non-perception",pli:"n'evasaññān'āsaññāyatanacitta"},
+
+{id:"akasanancayatana",zh:"空無邊處",en:"base of infinite space|boundless space",pli:"ākasānañcāyatana"},
+{id:"vinnanancayatana",zh:"識無邊處",en:"base of boundless consciousness|boundless consciousness",pli:"viññāṇañcāyatana"},
+{id:"akincannayatana",zh:"無所有處",en:"base of nothingness",pli:"ākincaññāyatana"},
+{id:"nevasannanasannayatana",zh:"非想非非想處",en:"base of neither perception nor non-perception",pli:"n'evasaññān'āsaññāyatana"},
+
+{id:"lokuttaracitta",zh:"8出世間心",arm:"#nibbana",func:"#javana",stem:"#lokuttara",en:"supermundane consciousness",pli:"lokuttaracitta",has:"#4lokuttarakusalacitta#4lokuttaravipakacitta"},
+{id:"4lokuttarakusalacitta",zh:"4出世間善心",stem:"#kusalacitta",has:"#sotapattimaggacitta#sakadagamimaggacitta#anagamimaggacitta#arahattamaggacitta",en:"supermundane wholesome consciousness",pli:"lokuttarakusalacitta"},
+{id:"4lokuttaravipakacitta",zh:"4出世間果報心",stem:"#vipakacitta",has:"#sotapattiphalacitta#sakadagamiphalacitta#anagamiphalacitta#arahattaphalacitta",en:"supermundane resultant consciousness",pli:"lokuttaravipākacitta"},
+
+{id:"sotapattimaggacitta",zh:"須陀洹道心",is:"#maggacitta",en:"path consciousness of stream-entry",pli:"sotāpattimaggacitta",stem:"#sotapanna"},
+{id:"sakadagamimaggacitta",zh:"斯陀含道心",is:"#maggacitta",en:"path consciousness of once-returning",pli:"sakadāgāmimaggacitta",stem:"#sakadagami"},
+{id:"anagamimaggacitta",zh:"阿那含道心",is:"#maggacitta",en:"path consciousness of no-returning",pli:"anāgāmimaggacitta",stem:"#anagami"},
+{id:"arahattamaggacitta",zh:"阿羅漢道心",is:"#maggacitta",en:"path consciousness of arahantship",pli:"arahattamaggacitta",stem:"#arahant"},
+
+{id:"sotapattiphalacitta",zh:"須陀洹果心",is:"#phalacitta",en:"fruition consciousness of stream-entry",pli:"sotāpattiphalacitta",stem:"#sotapanna"},
+{id:"sakadagamiphalacitta",zh:"斯陀含果心",is:"#phalacitta",en:"fruition  consciousness of once-returning",pli:"sakadāgāmiphalacitta",stem:"#sakadagami"},
+{id:"anagamiphalacitta",zh:"阿那含果心",is:"#phalacitta",en:"fruition consciousness of no-returning",pli:"anāgāmiphalacitta",stem:"#anagami"},
+{id:"arahattaphalacitta",zh:"阿羅漢果心",is:"#phalacitta",en:"fruition consciousness of arahantship",pli:"arahattaphalacitta",stem:"#arahant"},
+
+{id:"maggacitta",zh:"道心",en:"path consciousness",pli:"maggacitta"},
+{id:"phalacitta",zh:"果心",en:"fruition consciousness",pli:"phalacitta"},
+
+
+{id:"magganana",zh:"道智",en:"path knowledge",pli:"maggañāṇa"},
+{id:"phalanana",zh:"果智",en:"fruition knowledge",pli:"phalañāṇa"},
+{id:"phalasamapatti",zh:"果定|果等至",is:"#samapatti",stem:"#phala",en:"fruition attainment",pli:"phalasamāpatti"},
+{id:"kusala",zh:"善",en:"wholesome",pli:"kusala"},
+{id:"akusala",zh:"不善",en:"unwholesome",pli:"akusala"},
+{id:"12akusakacitta",zh:"12不善心",func:"#javana",en:"12 unwholesome",pli:"akusalacitta",has:"#8lobhamulacitta#2dosamulacitta#2mohamulacitta"},
+{id:"8lobhamulacitta",zh:"8貪根心",en:"12 greed-rooted",pli:"lobha mūla citta",or1:"#somanassasahagata#domanassasahagata",or2:"#ditthigatasampayutta#ditthigatavippayutta",or3:"#sasankharika#asankharika",stem:"#lobha"},
+{id:"somanassasahagata",zh:"悅俱" ,en:"accompanied by joy",pli:"somanassasahagata",stem:"#somanassa"},
+{id:"domanassasahagata",zh:"憂俱" ,en:"accompanied by displeasure",pli:"somanassasahagata",stem:"#domanassa"},
+{id:"upekkhasahagata",zh:"捨俱",stem:"#upekkha" ,en:"accompanied by equanimity",pli:"upekkhāsahagata"},
+{id:"ditthigatasampayutta",zh:"邪見相應",en:"associated with wrong view",pli:"diṭṭhigatasampayutta",stem:"#ditthi#sampayutta"},
+{id:"ditthigatavippayutta",zh:"邪見不相應",en:"dissociated with wrong view",pli:"diṭṭhigatavippayutta",stem:"#ditthi#vippayutta"},
+{id:"sasankharika",zh:"有行",amb:"#sankhara",def:"受到慫恿",en:"prompted",pli:"sasaṅkhārika"},
+{id:"asankharika",zh:"無行",amb:"#sankhara",def:"沒有受到慫恿",en:"unprompted",pli:"asaṅkhārika"},
+{id:"5akusalasasankharikacitta",zh:"5不善有行心",def:"即#8lobhamulacitta;中的四個及#2dosamulacitta;中的一個",en:"5 unwholesome prompted consciousness",pli:"akusalasasaṅkhārikacitta"},
+{id:"2dosamulacitta",zh:"2瞋根心",en:"2 hatred-rooted",stem:"#dosa", attr:"#domanassasahagata#patighasampayutta",or:"#sasankharika#asankharika",pli:"dosa mūla citta"},
+{id:"patighasampayutta",zh:"瞋恚相應",en:"associated with hatred",pli:"paṭighasampayutta",stem:"#patigha#sampayutta"},
+{id:"patigha",zh:"瞋恚",syn:"#dosa",en:"aversion",pli:"paṭigha"},
+{id:"2mohamulacitta",zh:"2痴根心",attr:"#upekkhasahagata", stem:"#moha", en:"2 delusion-rooted",pli:"mohamūlacitta",or:"#vicikicchasampayutta#uddhaccasampayutta"},
+{id:"vicikicchasampayutta",zh:"疑相應",en:"associated with doubt",pli:"vicikicchāsampayutta",stem:"#vicikiccha"},
+{id:"uddhaccasampayutta",zh:"掉舉相應",en:"associated with restlessness",pli:"uddhaccasampayutta",stem:"#uddhacca"},
+{id:"18ahetukacitta",attr:"#ahetuka",zh:"18無因心",en:"18 rootless",pli:"ahetukacitta",has:"#7akusalavipakacitta#8kusalavipakahetukacitta#3ahetukakiriyacitta"},
+{id:"sahetuka",zh:"有因",en:"with root",pli:"sahetuka"},
+{id:"ahetuka",zh:"無因",en:"rootless",pli:"ahetuka"},
+{id:"7akusalavipakacitta",zh:"7不善果報心",en:"7 unwholesome resultant",pli:"akusala vipāka",def:"因#anittha;所緣生起。「#akusala;」一詞並非形容這些心本身，而是形容產生它們的#kamma;。概要精解pg20 一切不善果報心皆是#ahetuka;。",has:"#cakkhuvinnana#sotavinnana#ghanavinnana#jivhavinnana#dukkhasahagatakayavinnana#sampaticchanacitta#upekkhasahagatasantiranacitta",is:"#vipakacitta"},
+{id:"dvipancavinnana",zh:"雙五識",en:"five sensuous consciousness",pli:"dvipañcaviññāṇa",has:"#cakkhuvinnana#sotavinnana#ghanavinnana#jivhavinnana#kayavinnana",with:"#7sabbacittasadharana"},
+{id:"cakkhuvinnana",zh:"眼識",attr:"#upekkhasahagata",base:"#cakkhupasada",en:"eye consciousness",pli:"cakkhuviññaṇa"},
+{id:"sotavinnana",zh:"耳識",attr:"#upekkhasahagata",base:"#sotapasada",en:"ear consciousness",pli:"sotaviññaṇa"},
+{id:"ghanavinnana",zh:"鼻識",attr:"#upekkhasahagata",base:"#ghanapasada",en:"nose consciousness",pli:"ghānaviññaṇa"},
+{id:"jivhavinnana",zh:"舌識",attr:"#upekkhasahagata",base:"#jivhapasada",en:"tongue consciousness",pli:"jivhāviññaṇa"},
+{id:"kayavinnana",zh:"身識",base:"#kayapasada",en:"body consciousness",pli:"kāyaviññaṇa",stem:"#kayavinnana"},
+{id:"dukkhasahagatakayavinnana",zh:"苦俱身識",attr:"dukkhasahagata",en:"body consciousness accompanied by pain",pli:"kāyaviññaṇa",stem:"#kayavinnana"},
+{id:"sukkhasahagatakayavinnana",zh:"樂俱身識",attr:"sukkhasahagata",en:"body consciousness accompanied by joy",pli:"kāyaviññaṇa",stem:"#kayavinnana"},
+{id:"sampaticchanacitta",attr:"#upekkhasahagata",zh:"領受心",or:"#kusalavipaka#akusalavipaka",en:"receiving consciousness",with:"#7sabbacittasadharana#vitakka#vicara#adhimokkha",pli:"sampaṭicchanacitta"},
+{id:"santiranacitta",zh:"推度心",en:"investigating consciousness",pli:"santiraṇacitta"},
+{id:"santirana",zh:"推度",en:"investigation",pli:"santiraṇa"},
+{id:"upekkhasahagatasantiranacitta",or:"#kusalavipaka#akusalavipaka",attr:"#upekkhasahagata",zh:"捨俱推度心",func:"#patisandhi#tadarammana#santirana",en:"investigating consciousness",pli:"santiraṇacitta",with:"#7sabbacittasadharana#vitakka#vicara#adhimokkha",stem:"#santirana"},
+{id:"somanasasahagatasantiranacitta",attr:"#somanassasahagata", zh:"悅俱推度心",func:"#tadarammana#santirana",en:"investigating consciousness",pli:"santiraṇacitta",with:"#7sabbacittasadharana#vitakka#vicara#adhimokkha#piti",stem:"#santirana"},
+{id:"8kusalavipakahetukacitta",attr:"#ahetuka",stem:"#kusala#vipakacitta",zh:"8善果報無因心",en:"8 wholesome rootless resultant",pli:"kusala vipāka",has:"#cakkhuvinnana#sotavinnana#ghanavinnana#jivhavinnana#sukkhasahagatakayavinnana#sampaticchanacitta#somanasasahagatasantiranacitta#upekkhasahagatasantiranacitta",def:"因#ittha;所緣及#atiittha;所緣生起",is:"#vipakacitta"},
+
+{id:"ittha",zh:"可喜",en:"desirable",pli:"iṭṭha"},
+{id:"anittha",zh:"不可喜",en:"undesirable",pli:"aniṭṭha"},
+{id:"atiittha",zh:"極可喜",en:"extremely desirable",pli:"ati iṭṭha"},
+{id:"3ahetukakiriyacitta",zh:"3無因唯作心",en:"3 rootless functional",pli:"ahetukakiriya",has:"#pancadvaravajjanacitta#manodvaravajjanacitta#hasituppadacitta"},
+{id:"pancadvaravajjanacitta",is:"#kiriyacitta",attr:"#upekkhasahagata",zh:"五門轉向心",en:"five door adverting consciousness",pli:"pañcadvārājjanacitta",with:"#7sabbacittasadharana#vitakka#vicara#adhimokkha"},
+{id:"3manodhatu",zh:"3意界",has:"#pancadvaravajjanacitta#sampaticchanacitta",en:"mind element",pli:"manodhātu",def:"只是非常粗淺地識知目標"},
+{id:"vinnanadhatu",zh:"7識界",has:"#cakkhuvinnana#sotavinnana#ghanavinnana#jivhavinnana#kayavinnana#3manodhatu#manovinnanadhatu",en:"seven consciousness elements",pli:"viññāṇadhātu"},
+{id:"manovinnanadhatu",zh:"76意識界",def:"除去 #dvipancavinnana;及#3manodhatu;的所有心 89-10-3=76。能更完整與清晰地識知目標，因為在它們前後的心都擁有相同的目標",en:"mind consciousness element",pli:"manoviññāṇadhātu"},
+{id:"manodvaravajjanacitta",is:"#kiriyacitta",attr:"#upekkhasahagata",zh:"意門轉向心",en:"mind door adverting consciousness",pli:"manodvarāvājjanacitta",syn:"#votthapanacitta"},
+{id:"votthapanacitta",zh:"確定心",en:"determining consciousness",pli:"votthapanacitta",def:"當#manodvaravajjanacitta;出現在#pancadvaravithi;時稱為確定心",with:"#7sabbacittasadharana#vitakka#vicara#adhimokkha#viriya"},
+{id:"hasituppada",zh:"生笑",def:"凡夫經由 4悅俱貪根+4悅俱大善心生笑，有學聖者前面8個除去邪見相應2個，共6個心可生笑，#arahantsmile;",en:"smile",pli:"hasituppāda"},
+{id:"hasituppadacitta",is:"#kiriyacitta",attr:"#somanassasahagata",zh:"生笑心",func:"#javana",en:"smile producing",pli:"hasituppādacitta",with:"#7sabbacittasadharana#vitakka#vicara#adhimokkha#viriya#piti"},
+
+{id:"kiriya",zh:"唯作",en:"functional",pli:"kiriya"},
+{id:"kusalacitta",zh:"善心",en:"wholesome consciousness",pli:"kusalacitta"},
+{id:"kusalavipaka",zh:"善果報心",en:"wholesome resultant",pli:"kusalavipāka"},
+{id:"akusalavipaka",zh:"不善果報心",en:"unwholesome resultant",pli:"akusalavipāka"},
+{id:"vipakacitta",zh:"果報心",or:"#kusalavipaka#akusalavipaka",en:"resultant consciousness",pli:"vipaka citta",pli:"vipākacitta"},
+{id:"kiriyacitta",stem:"#kiriya",zh:"唯作心",en:"functional consciousness",pli:"kiriya citta"},
+{id:"arahantsmile",zh:"阿羅漢之生笑",def:"有五個能令#arahant;微笑之心",has:"#hasituppadacitta#kamavacarasomanassasahagatakiriyacitta",en:"smile of arahant",pli:"-"},
+{id:"kamavacarasomanassasahagatakiriyacitta",attr:"#somanassasahagata",zh:"欲界悅俱唯作心",stem:"#8kamavacarakiriyacitta",def:"共四個",en:"sense-sphere functional consciousness accompanied by joy",pli:"kamavacarasomanassasahagatakiriyacitta"},
+{id:"sobhanacitta",zh:"美心",attr:"#kusala#abyakata" ,def:"除惡及無因，餘者皆為美。pāpāhetukamuttāni sobhanānī ti",en:"beautiful consciousness",pli:"sobhanacitta",has:"#24kamavacarasobhanacitta#rupavacaracitta#arupavacaracitta#lokuttaracitta"},
+{id:"abyakata",zh:"無記",pli:"abyākata",has:"#kiriya#vipaka",en:"kammically indeterminate"},
+{id:"24kamavacarasobhanacitta",zh:"24欲界美心",stem:"#kamavacara",en:"24 sense-sphere beautiful consciousness",pli:"kāmāvacara sobhana",has:"#8kamavacarakusalacitta#8kamavacaravipakacitta#8kamavacarakiriyacitta"},
+{id:"8kamavacarakusalacitta",zh:"8欲界善心|大善心",attr:"#sahetuka",func:"#javana",stem:"#kamavacara#kusalacitta",or1:"#somanassasahagata#upekkhasahagata",or2:"#nanasampayuta#nanavippayuta",or3:"#sasankharika#asankharika",en:"8 sense-sphere wholesome consciousness",pli:"kāmāvacara kusala|mahākusaka citta"},
+{id:"nanasampayuta",zh:"智相應",en:"associated with wisdom",pli:"ñāṇasampayuta"},
+{id:"nanavippayuta",zh:"智不相應",en:"associated with wisdom",pli:"ñāṇavippayuta"},
+{id:"8kamavacaravipakacitta",zh:"8欲界果報心|大果報心",func:"#patisandhi#tadarammana",attr:"#sahetuka",stem:"#kamavacara#vipakacitta",or1:"#somanassasahagata#upekkhasahagata",or2:"#nanasampayuta#nanavippayuta",or3:"#sasankharika#asankharika",en:"8 sense-sphere resultant consciousness",pli:"kāmāvacara vipakā|mahāvivipakā citta",def:"為了區別它們和善果報無因心，所以稱之為「有因」（sahetuka）。無因與有因的善果報心都是由同樣的八種善心所產生，但這兩組心在各自的素質與作用方面則有差別。概要精解pg32"},
+{id:"8kamavacarakiriyacitta",zh:"8欲界唯作心|大唯作心",func:"#javana",stem:"#kamavacara#kiriyacitta",attr:"#sahetuka",or1:"#somanassasahagata#upekkhasahagata",or2:"#nanasampayuta#nanavippayuta",or3:"#sasankharika#asankharika",en:"8 sense-sphere functional consciousness",pli:"kāmāvacara kiriya|mahākiriya citta"},
+
+
+{id:"cetasika",zh:"心所",en:"mental factor",pli:"cetasika",types:"#7sabbacittasadharana#6pakinnaka#14akusala#25sobhana",def:"一、與心同生（ekuppāda）；二、 與心同滅（ekanirodha）；三、 與心緣取同一目標（ekālambana）；四、 與心擁有同一依處（ekavatthuka）。概要精解pg58"},
+{id:"7sabbacittasadharana",is:"#cetasika",zh:"7遍一切心心所",en:"seven universal",pli:"sabba citta sādhāraṇa",has:"#phassa#vedana#sanna#cetana#ekaggata#jivit#manasikara"},
+{id:"6pakinnaka",zh:"6雜心所",en:"six occasional",pli:"pakinnaka cetasika",has:"#vitakka#vicara#adhimokkha#viriya#piti#chanda"},
+{id:"14akusala",zh:"14不善心所",en:"fourteen unwholesome",pli:"akusalacetasika",has:"#moha#ahirika#anottappa#uddhacca#lobha#ditthi#mana#dosa#issa#macchariya#kukkucca#thina#middha#vicikiccha"},
+
+{id:"jivit",zh:"名法命根",pli:"jivita",en:"life faculty"},
+{id:"vitakka",zh:"尋",en:"initial application",pli:"vitakka"},
+{id:"vicara",zh:"伺",en:"sustained application",pli:"vicara"},
+{id:"adhimokkha",zh:"勝解",en:"decision",pli:"adhimokkha"},
+{id:"ekaggata",zh:"一境性",en:"one pointedness",pli:"ekaggatā"},
+{id:"manasikara",zh:"作意",en:"attension",pli:"attention"},
+{id:"piti",zh:"喜",en:"zest",pli:"pīti"},
+{id:"cetana",zh:"思",def:"負責造#kamma;",en:"volition",pli:"cetanā"},
+{id:"chanda",zh:"欲",en:"desire",pli:"chanda"},
+{id:"moha",zh:"痴",en:"delusion",pli:"moha"},
+{id:"ahirika",zh:"無慚",en:"shamelessness",pli:"ahirīka"},
+{id:"anottappa",zh:"無悔",en:"fearlessness of wrong",pli:"anottāppa"},
+{id:"uddhacca",zh:"掉舉",en:"restlessness",pli:"uddhacca"},
+{id:"lobha",zh:"貪",en:"greed",pli:"lobha"},
+{id:"ditthi",zh:"邪見",en:"wrong view",pli:"diṭṭhi"},
+{id:"mana",zh:"慢",en:"conceit",pli:"māna"},
+{id:"dosa",zh:"瞋",en:"hatred",pli:"dosa"},
+{id:"issa",zh:"嫉",en:"envy",pli:"issa"},
+{id:"macchariya",zh:"慳",en:"avarice",pli:"macchariya"},
+{id:"kukkucca",zh:"悔",en:"worry",pli:"kukkucca"},
+{id:"thina",zh:"昏沉",en:"sloth",pli:"thīna"},
+{id:"middha",zh:"睡眠",en:"torpor",pli:"middha",with:"#sasankharika"},
+{id:"vicikiccha",zh:"疑",en:"doubt",pli:"vicikicchā",with:"#sasankharika",
+def:"vicikicchā，諸論師提出兩個詞源學的說明：一、由於思緒紛雜困亂而致的困惑（vici (vicinanto) = 詢問 + kicch = 受到困擾；）；二、缺少智慧解決問題。（vi = 毫無 + cikiccha = 解決方案。）概要精解pg19腳注"},
+
+{id:"saddhapanna",zh:"信慧組",def:"加上識即初禪34名法",has:"#7sabbacittasadharana#6pakinnaka#19sobhanasadharana#pannindriya",en:"group with faith and wisdom",pli:"saddhapañña"},
+{id:"25sobhana",zh:"25美心所",en:"25 beautiful factors",pli:"sobhaṇacetasika",has:"#19sobhanasadharana#3virati#2appamanna#1amoha"},
+{id:"19sobhanasadharana",zh:"19遍一切美心心所",en:"universal beautiful factors",pli:"sobhaṇasādhāraṇa",has:"#saddha#sati#hiri#ottappa#alobha#adosa#tatramajjhattata#kayapassaddhi#cittapassaddhi#kayalahuta#cittalahuta#kayamuduta#cittamuduta#kayakammabbata#cittakammabbata#kayapagubbata#cittapagubbata#kayujjukata#cittujjukata"},
+{id:"saddha",zh:"信",en:"faith",pli:"saddha"},
+{id:"sati",zh:"念",en:"mindfullness",pli:"sati"},
+{id:"hiri",zh:"慚",en:"shame",pli:"hirī"},
+{id:"ottappa",zh:"愧",en:"fear of wrong",pli:"ottappa"},
+{id:"alobha",zh:"無貪",en:"non-greed",pli:"alobha"},
+{id:"adosa",zh:"無瞋",en:"non-hatred",pli:"adosa"},
+{id:"tatramajjhattata",zh:"中捨",en:"neutrality of mind",pli:"tatramajjhattatā"},
+{id:"passaddhi",zh:"輕安",en:"tranquality",pli:"passaddhi"},
+{id:"kayapassaddhi",zh:"身輕安",en:"tranquality of mental body",pli:"kāyapassaddhi",stem:"passaddhi"},
+{id:"cittapassaddhi",zh:"心輕安",en:"tranquality of consciousness",pli:"cittapassaddhi",stem:"passaddhi"},
+{id:"kayalahuta",zh:"身輕快",en:"lightness of mental body",pli:"kāyalahutā"},
+{id:"cittalahuta",zh:"心輕快",en:"lightness of consciousness",pli:"cittalahutā"},
+{id:"kayamuduta",zh:"身柔軟",en:"malleability of mental body",pli:"kāyamudutā"},
+{id:"cittamuduta",zh:"心柔軟",en:"malleability of consciousness",pli:"cittamudutā"},
+{id:"kayakammabbata",zh:"身適業",en:"wieldiness of mental body",pli:"kāyakammaññatā"},
+{id:"cittakammabbata",zh:"心適業",en:"wieldiness of consciousness",pli:"cittakammaññatā"},
+{id:"kayapagubbata",zh:"身練達",en:"proficiency of mental body",pli:"kāyapaguññatā"},
+{id:"cittapagubbata",zh:"心練達",en:"proficiency of consciousness",pli:"cittapaguññatā"},
+{id:"kayujjukata",zh:"身正直",en:"rectitude of mental body",pli:"kāyujjukatā"},
+{id:"cittujjukata",zh:"心正直",en:"rectitude of consciousness",pli:"cittujjukatā"},
+{id:"3virati",zh:"3離心所",en:"three abstinence",pli:"virati",has:"#sammavaca#sammakammanta#sammaajiva"},
+{id:"sammavaca",zh:"正語",def:"虛妄語（musāvāda）、離間語（pisuṇā vācā）、粗惡語（pharusā vācā）、雜穢語（samphappalāpa）。",en:"right speech",pli:"sammāvācā"},
+
+{id:"2appamanna",zh:"2無量心所",en:"two illimitables",pli:"appamāṇa",has:"#karuna#mudita"},
+{id:"karuna",zh:"悲",en:"compassion",pli:"karuṇā"},
+{id:"mudita",zh:"隨喜",en:"appreciative joy",pli:"muditā"},
+
+{id:"1amoha",zh:"1無痴",en:"non delusion",pli:"amoha",has:"#pannindriya"},
+{id:"pannindriya",zh:"慧根",en:"wisdom faculty",pli:"paññindriya",stem:"#panna#indriya"},
+{id:"vithi",zh:"心路過程",en:"mental process",pli:"vithi"},
+{id:"patisandhi",zh:"結生",en:"rebirth linking",pli:"paṭisandhi"},
+{id:"patisandhicitta",zh:"結生心",en:"rebirth linking consciousness",pli:"paṭisandhicitta",stem:"patisandhi"},
+{id:"dvaravimutta",zh:"離門心",syn:"#vithimuttacitta",en:"door-freed",pli:"dvāravimutta",has:"#8kamavacarakusalacitta#5rupavacaravipakacitta#4arupavacaravipakacitta#upekkhasahagatasantiranacitta"},
+{id:"vithimutta",zh:"離心路過程",en:"process-free",pli:"vithimutta",stem:"#vithi"},
+{id:"vithimuttacitta",zh:"離心路心",en:"process-freed consciousness",pli:"vīthimutta",arm:"#kamma#kammanimitta#gatinimitta",has:"#patisandhicitta#bhavanga#cuticitta",stem:"#vithimutta"},
+{id:"cuticitta",zh:"死亡心",en:"death consciousness",pli:"cuticitta"},
+
+{id:"javana",zh:"速行",en:"impulsion",pli:"javana"},
+{id:"javanacitta",zh:"速行心",en:"impulsion mind moment",pli:"javanacittakhana"},
+{id:"kamavacarajavana",zh:"29欲界速行",en:"sense-sphere impulsion",pli:"kāmāvacarajavana",has:"#12akusakacitta#8kamavacarakusalacitta#8kamavacarakiriyacitta#hasituppadacitta"},
+{id:"tadarammana",zh:"彼所緣",en:"registration",pli:"tadārammaṇa"},
+
+{id:"pancadvaravithi",zh:"五門心路",is:"#vithi",stem:"#pancadvara",en:"five door cognitive process",pli:"pañcadvāravīthi"},
+{id:"pancadvara",zh:"五門",is:"#rupadhamma",en:"mind door",pli:"pañcadvāra"},
+{id:"manodvara",zh:"意門",syn:"#bhavanga",is:"#nama",en:"mind door",pli:"manodvāra"},
+{id:"manodvaravithi",zh:"意門心路",is:"#vithi",en:"mind door cognitive process",pli:"manodvāravīthi"},
+{id:"appanavithi",zh:"安止心路",is:"#vithi",en:"process of absorption",pli:"appanāvīthi",has:"#rupavacaracitta#arupavacaracitta"},
+
+{id:"cattaricatukkha",zh:"四個四",types:"#vithimutta",en:"set of fours",pli:"catāricatukkha",has:"#bhumicattukka#patisandhicatukka#kammacatukka"},
+{id:"bhumicattukka",zh:"四生存地",en:"the four planes of existence",pli:"bhūmicatukka",has:"#apayabhumi#kamasugatibhumi#rupavacarabhumi#arupavacarabhumi"},
+
+{id:"apayabhumi",zh:"惡趣地",has:"#niraya#tiracchanayoni#pettivisaya#asurakaya",en:"the woeful plane",pli:"apāyabhūmi",has:"#apayapatisandhi"},
+{id:"niraya",zh:"地獄|泥犁",en:"hell",pli:"niraya"},
+//中部講地獄的經
+{id:"kamasugatibhumi",zh:"欲善趣地",has:"#manussa#catummaharajika#tavatimsa#tusita#nimmanarati#paranimmitavasavatti",en:"the sensuous blissful plane",pli:"kāmasugatibhūmi",has:"#kamasugatipatisandhi"},
+{id:"manussa",zh:"人間",def:"",en:"human realm",pli:"manussa"},
+
+{id:"rupavacarabhumi",zh:"色界地",stem:"#rupavacara",has:"#pathamajjhanabhumi#dutiyajjhanabhumi#tatiyajjhanabhumi#catutthajjhanabhumi",en:"fine-material realm",pli:"rūpāvacarabhūmi",has:"#rupavacarapatisandhi"},
+
+{id:"arupavacarabhumi",zh:"無色界地",en:"immaterial realm",pli:"arūpāvacarabhūmi",has:"#akasanancayatanabhumi#vinnanancayatanabhumi#akincannayatanabhumi#nevasannanasannayatanabhumi",stem:"#arupavacara",has:"#arupavacarapatisandhi"},
+
+{id:"patisandhicatukka",zh:"四種結生",has:"#apayapatisandhi#kamasugatipatisandhi#rupavacarapatisandhi#arupavacarapatisandhi",en:"four types of rebirth linking",pli:"paṭisandhicatukka",stem:"patisandhi"},
+{id:"apayapatisandhi",zh:"惡趣結生",def:"唯一方式#akusalavipaka;的#upekkhasahagatasantiranacitta;",en:"rebirth linking in woeful plane",pli:"apāyapaṭisandhi",stem:"#apayabhumi"},
+{id:"kamasugatipatisandhi",zh:"欲善趣結生",def:"以#kusalavipaka;的#upekkhasahagatasantiranacitta;成為先天殘缺的人類、某些地神、某些#asurakaya;的#patisandhicitta;。 #8kamavacaravipakacitta;能作為一切#kamasugatibhumi;的#patisandhicitta; #bhavanga; #cuticitta;",en:"rebirth linking in sensuous blissful plane",pli:"kāmasugatipaṭisandhi"},
+{id:"rupavacarapatisandhi",zh:"色界結生",def:" #5rupavacaravipakacitta; 為其相應之#patisandhicitta; 對無想有情，色法本身生起為結生",en:"rebirth linking in fine-material sphere",pli:"rūpavacarapaṭisandhi"},
+{id:"arupavacarapatisandhi",zh:"無色界結生",def:" #4arupavacaravipakacitta; 為其相應之#patisandhicitta; ",en:"rebirth linking in immaterial sphere",pli:"arūpavacarapaṭisandhi"},
+
+{id:"kammacatukka",zh:"四種業",en:"four types of kamma",pli:"kammacatukkha",types:"#kiccavasena#pakadanapariyayena#pakakalavasena"},
+{id:"kiccavasena",zh:"依作用",en:"by way of function",pli:"kiccavasena",has:"#janaka#upatthambaka#upapilaka#upaghataka"},
+{id:"janaka",zh:"令生業",en:"productive kamma",pli:"janaka"},
+{id:"upatthambaka",zh:"支助業",en:"supportive kamma",pli:"upatthambaka"},
+{id:"upapilaka",zh:"阻礙業",en:"obstructive kamma",pli:"upapīḷaka"},
+{id:"upaghataka",zh:"毀壞業",en:"destructive",pli:"upaghātaka"},
+
+{id:"pakadanapariyayena",zh:"依成熟之順序",has:"#garukakamma#anantariya#asannakamma#acinnakamma",en:"by order of ripening",pli:"pākadana pariyayena"},
+{id:"garukakamma",zh:"重業",syn:"#anantariya",en:"weighty kamma",pli:"garukakamma"},
+{id:"anantariya",zh:"無間業",en:"five heinous crimes",pli:"ānantariya"},
+{id:"asannakamma",zh:"臨死業",en:"death-proximate kamma",pli:"āsannakamma"},
+{id:"acinnakamma",zh:"慣行業",en:"habitual kamma",pli:"āciṇṇakamma"},
+{id:"katatta",zh:"已作業",en:"reserve",pli:"kaṭatta"},
+{id:"pakakalavasena",zh:"依成熟之時間",has:"#ditthadhammavedaniya#upapajjavedaniya#apapariyavedaniya#ahosikamma",en:"by time of ripening",pli:"pākakālavasena"},
+
+{id:"ditthadhammavedaniya",zh:"現生受業",def:"由第一個#javanacitta;所造之#kamma; 無機會成熟即為#ahosikamma;",en:"immediately effective kamma",pli:"diṭṭhadhammavedanīya kamma"},
+{id:"upapajjavedaniya",zh:"次生受業",def:"由第七個#javanacitta;所造之#kamma;。無機會成熟即為#ahosikamma;",en:"subsequently effective kamma",pli:"upapajjavedanīya kamma"},
+{id:"apapariyavedaniya",zh:"無盡業",def:"由第二到第六個#javanacitta;所造之#kamma;。只要還在輪迴，它即永遠不會變成無效。沒有任何人能夠免除體驗無盡業的果報，即使佛陀與阿羅漢也不例外。 ",en:"indefinitely effective kamma",pli:"apāpariyavedanīya"},
+{id:"ahosikamma",zh:"無效業",en:"defunct kamma",pli:"ahosikamma"},
+
+
+
+{id:"pakatthanavasena",zh:"依成熟之地",def:"不善業,欲界善業,色界善業,無色界善業",en:"by place of ripening",pli:"pākaṭṭhānavasena"},
+
+
+{id:"bhavanga",zh:"有分",en:"life-continuum",pli:"bhavaṅga"},
+{id:"kammanimitta",zh:"業相",en:"sign of kamma",pli:"kammanimitta"},
+{id:"gatinimitta",zh:"趣相",en:"sign of destiny",pli:"gatinimitta"},
+
+{id:"10samyojana",zh:"10結",has:"#kamaraga#ruparaga#aruparaga#patigha#mana#ditthi#silabbataparamasa#vicikiccha#uddhacca#avijja",en:"10 fetters",pli:"Saṁyojana"},
+{id:"kamaraga",zh:"欲貪",en:"attachment to sensual lust",pli:"kāmarāga"},
+{id:"ruparaga",zh:"色貪",en:"attachment to fine-material existence",pli:"rūparāga"},
+{id:"aruparaga",zh:"無色貪",en:"attachment to immaterial existence",pli:"arūparāga"},
+{id:"3samyojana",zh:"3結",has:"#sakayaditti#vicikiccha#silabbataparamasa", en:"3 fetters",pli:"tīṇi saṁyojana"},
+{id:"sakayaditti",zh:"(有)身見",en:"personality view",pli:"sakkāya-diṭṭi",stem:"ditthi"}, 
+{id:"silabbataparamasa",zh:"戒禁取",en:"adherence to rites and ceremonies",pli:"sīlabbata-parāmasa"},
+
+{id:"dana",zh:"布施",en:"offering",pli:"dāna"},
+{id:"sila",zh:"持戒",en:"morality",pli:"sīla"},
+{id:"sacca",zh:"諦",en:"truth",pli:"sacca"},
+{id:"panna",zh:"慧",en:"wisdom",pli:"pañña"},
+{id:"nana",zh:"智",en:"insight knowledge",pli:"ñāṇa"},
+{id:"khanti",zh:"忍耐",en:"patience",pli:"khanti"},
+{id:"viriya",zh:"精進",en:"energy",pli:"viriya"},
+{id:"metta",zh:"慈",en:"loving kindness",pli:"metta"},
+{id:"adhitthana",zh:"決意",en:"determination",pli:"adhiṭṭhahāna"},
+{id:"upekkha",zh:"捨",is:"#vedana",en:"equanimity",pli:"upekkha",
+def:"譯按：巴利文 upekkha 一詞有多種不同的意義。在此列出較常見的幾個：一、此節所提及的「捨俱」是「與捨受俱行」，此捨受是「受心所」（vedanā-cetasika）；二、五禪支裡的捨也是屬於受心所；三、捨覺支與捨梵住或捨無量心的捨是「中捨性心所」（tatramajjhattatā）；四、觀禪的行捨智則屬於「慧心所」（paññā-cetasika）。五、「精進捨」是不過強亦不太弱而適中的精進，是屬於精進心所（virīya-cetasika）。概要精解pg15"
+},
+{id:"nekkhamma",zh:"出離",en:"renounciation",pli:"nekkhamma"},
+
+
+{id:"10parami",	zh:"十波羅密",en:"10 perfections",pli:"dasa paramiyo",has:"#dana#sila#khanti#viriya#adhitthana#nekkhamma#sacca#metta#upekkha#panna",
+},
+{id:"nama",zh:"名",en:"mentality",pli:"nāma",types:"#citta#cetasika"},
+{id:"rupa",zh:"色",en:"material phenomena|materiality",pli:"rūpa"},
+{id:"rupadhamma",is:"dhamma",stem:"#rupa",en:"mentality dhamma",pli:"rūpa dhamma",zh:"色法"},
+{id:"4mahabhuta",
+	is:"#nipphannarupa",
+	has:"#pathavi#apo#tejo#vayo",
+	zh:"四大",
+	en:"four elements",
+	pli:"cātummahābhūtika"
+},
+{id:"nipphannarupa",is:"#rupa",attr:"#sabhavarupa#salakkhanarupa#ruparupa#sammasanarupa",zh:"完成色",pli:"nipphannarūpa",en:"concretely produced matter|real rupa"},
+{id:"sabhavarupa",zh:"有自性色",en:"matter possessing intrinsic nature",pli:"sabhātvarūpa"},
+{id:"salakkhanarupa",zh:"有相色",en:"matter possessing real characteristic",pli:"salakkhaṇarūpa",def:"有#anicca;、#dukkha;、#anatta;三相"},
+{id:"ruparupa",zh:"色色",en:"material matter",pli:"rūparūpa"},
+{id:"sammasanarupa",zh:"思惟色",def:"可作為#vipassana;的目標",en:"matter to be comprehended by insight",pli:"sammasanarūpa"},
+
+
+
+{id:"pathavi",	pli:"paṭhavī",	en:"earth element",	zh:"地大"},
+{id:"apo",	pli:"apo",	en:"water element",	zh:"水大"},	
+{id:"tejo",	pli:"tejo",	en:"water element",	zh:"火大"},
+{id:"vayo",	pli:"vāyo",	en:"water element",	zh:"風大"},	
+
+{id:"pathavidhatu",zh:"地界",stem:"#pathavi",pli:"paṭhavīdhātu",	en:"earth element"},
+{id:"apodhatu",	zh:"水界",stem:"#apo",pli:"apodhātu",en:"water element"},
+{id:"tejodhatu",zh:"火界",stem:"#tejo",pli:"tejodhātu",en:"water element"},
+{id:"vayodhatu",zh:"風界",stem:"#vayo",pli:"vāyodhātu",en:"water element"},	
+{id:"bhutarupa",zh:"元素色",is:"#nipphannarupa",en:"essential material phenomena",pli:"bhūtarūpa",has:"#pathavidhatu#apodhatu#tejodhatu#bhutarupa"},
+{id:"upadayarupa",zh:"所造色",is:"#rupa",en:"derived material phenomena",pli:"upādāyarūpa"},
+{id:"gocararupa",zh:"境色",is:"#nipphannarupa",en:"objective material phenomena",pli:"#gocararūpa", has:"#ruparammana#sadda#gandha#rasarammana#photthabba",en:"",pli:"gocararupa"},
+
+{id:"itthabhavarupa",zh:"女根色",en:"femininity",pli:"itthabhāvarūpa"},
+{id:"purisabhavarupa",zh:"男根色",en:"masculinity",pli:"purisabhāvarūpa"},
+{id:"bhavarupa",is:"#nipphannarupa",
+	types:"#purisabhavarupa#itthabhavarupa",
+	zh:"性根色",en:"sex mentality phenomena",pli:"bhāvarūpa"
+},
+{id:"hadayarupa",zh:"心色",has:"#hadayavatthu",en:"heart mentality phenomena",pli:"hadaya rūpa"},
+{id:"hadayavatthu",zh:"心所依處色",en:"heart base mentality phenomena",pli:"hadayavatthu"},
+{id:"jivitarupa",zh:"命色",has:"#jivitindriya",en:"live mentality phenomena",pli:"jīvitarūpa"},
+{id:"jivitindriya",zh:"命根色",is:"#nipphannarupa",en:"live faculty",pli:"jivitindriya"},
+{id:"ahararupa",zh:"食色",has:"#ahara",en:"nutriment material phenomena",pli:"ahararūpa"},
+{id:"kabalikahara",zh:"段食",is:"#nipphannarupa",en:"editable food",pli:"kabaḷikāhararūpa"},
+{id:"ahara",zh:"食",types:"#cattaroahara",en:"nutriment",pli:"ahara"},
+{id:"cattaroahara",zh:"四食",en:"nutriment",has:"#kabalikahara#phassa#manosancetana#vinnana",pli:"cattāro āhāra"},
+{id:"manosancetana",zh:"意思(食)",en:"",pli:"manosañcetanā"},
+{id:"anipphannarupa",is:"#upadayarupa",zh:"不完成色",en:"non-concrete matter|non real rupa",pli:"anipphannarūpa"},
+
+{id:"paricchedarupa",zh:"限制色",is:"#anipphannarupa",en:"limiting material phenomena",pli:"paricchedarūpa",has:"#akasadhatu"},
+{id:"akasadhatu",zh:"空界",en:"space element",pli:"ākāsadhātu"},
+{id:"vinnatirupa",zh:"表色",is:"#anipphannarupa",en:"intimating material phenomena",pli:"viññātirūpa",has:"#kayavinnatti#vacivinnatti"},
+{id:"kayavinnatti",zh:"身表",en:"bodily intimation",pli:"kāyaviññatti"},
+{id:"vacivinnatti",zh:"語表",en:"vocal intimation",pli:"vacīviññatti"},
+
+{id:"5vikararupa",zh:"變化色",is:"#anipphannarupa",en:"intimating material phenomena",pli:"vikārarūpa",has:"#rupassalahuta#rupassamuduta#rupassakammannata#vinnatirupa"},
+
+{id:"rupassalahuta",zh:"色輕快性",en:"material lightness",pli:"rūpassa-lahutā"},
+{id:"rupassamuduta",zh:"色柔軟性",en:"material malleability",pli:"rūpassa-mudutā"},
+{id:"rupassakammannata",zh:"色適業性",en:"material wieldiness",pli:"rūpassa-kammaññatā"},
+
+{id:"lakkhanarupa",zh:"相色",has:"#rupassaupacaya#rupassasantati#rupassajarata#rupassaaniccata",en:"characteristic of material phenomena",pli:"lakkhaṇarūpa"},
+{id:"rupassaupacaya",zh:"色積集",en:"production of material phenomena",pli:"rūpassa-upacaya",def:"指在#patisandhi;時刻生起的#kaya10; #bhava10; #hadaya10;"},
+{id:"rupassasantati",zh:"色相續",en:"continuity of material phenomena",pli:"rūpassa-santati"},
+{id:"rupassajarata",zh:"色老性",en:"decay of material phenomena",pli:"rūpassa-jaratā"},
+{id:"rupassaaniccata",zh:"色無常性",en:"impermanence of material phenomena",pli:"rūpassa-aniccatā"},
+
+
+{id:"tiloka",zh:"三界",en:"three worlds",pli:"tiloka",types:"#kamaloka#rupaloka#arupaloka"},
+{id:"kamaloka",zh:"欲世界",en:"sensuous world",pli:"kāmaloka"},
+{id:"rupaloka",zh:"色世界",en:"fine-material world",pli:"rūpaloka"},
+
+{id:"arupa",zh:"無色",en:"immaterial",pli:"arūpa"},
+{id:"arupaloka",zh:"無色世界",en:"immaterial world",pli:"arūpaloka"},
+
+{id:"namarupa",zh:"名色",en:"mentality and materiality",pli:"nāmarūpa",stem:"#nama#rupa"},
+{id:"avijja",zh:"無明",anto:"#vijja",en:"ignorant",pli:"avijja"},
+{id:"vijja",zh:"明",en:"knowledge",pli:"vijja"},
+{id:"ayatana",zh:"入處|感官",en:"sense door",pli:"āyatana"},
+{id:"salayatana",stem:"#ayatana",zh:"六入",en:"six sense doors",pli:"saḷāyatana"},
+{id:"phassa",zh:"觸",amb:"#photthabba",en:"contact",pli:"phassa"},
+{id:"tanha",zh:"貪愛",en:"craving",pli:"taṇhā"},
+{id:"upadana",zh:"取",en:"attachment",pli:"upādāna"},
+{id:"bhava",zh:"有",en:"becoming",pli:"bhāva"},
+{id:"jati",zh:"生",en:"birth",pli:"jaṭī"},
+{id:"jara",zh:"老",en:"aging",pli:"jara"},
+{id:"marana",zh:"死",en:"death",pli:"maraṇa"},
+{id:"somanassa",zh:"悅",en:"joy",pli:"somanassa"},
+{id:"domanassa",zh:"憂",en:"grief|displeasure",pli:"domanassa"},
+{id:"jara_etc",zh:"老死等",en:"aging and so on", has:"#jara#marana#soka#parideva#dukkha#domanassa#upayasa",pli:"jara pe.."},
+{id:"soka",zh:"愁",en:"sorrow",pli:"soka"},
+{id:"parideva",zh:"悲",en:"lamentation",pli:"parideva"},
+{id:"upayasa",zh:"惱",en:"despair",pli:"upāyāsa"},
+{id:"paticcasamuppada",zh:"緣起",en:"dependent origination",pli:"paṭicca-samuppāda",types:"#12samuppada#3vatta"},
+{id:"12samuppada",zh:"十二支緣起",
+has:"#avijja#sankhara#vinnana#namarupa#salayatana#phassa#vedana#tanha#upadana#bhava#jati#jara_etc",en:"dependent origination",pli:"paṭicca-samuppāda"},
+
+{id:"avacara",zh:"界",en:"realm",pli:"avacara"},
+{id:"kama",zh:"欲|愛慾",amb:"#chanda",en:"lust",pli:"kāma"},
+{id:"kamavacara",zh:"欲界",stem:"#kama#avacara",en:"sense-sphere realm",pli:"kāmâvacara"},
+{id:"rupavacara",zh:"色界",stem:"#rupa#avacara",en:"fine-material realm",pli:"rupâvacara"},
+{id:"arupavacara",zh:"無色界",stem:"#arupa#avacara",en:"immaterial realm",pli:"arūpâvacara"},
+   
+{id:"bhumi",zh:"地",amb:"#pathavi",pli:"bhūmi",en:"ground|earth|region|plane"},
+
+
+{id:"cakkhu",zh:"眼",en:"eye",pli:"cakkhu"},
+{id:"sota",zh:"耳",en:"ear",pli:"sota"},
+{id:"ghana",zh:"鼻",en:"nose",pli:"ghāna"},
+{id:"jivha",zh:"舌",en:"tongue",pli:"jivhā"},
+{id:"kaya",zh:"身",en:"body",pli:"kāya"},
+
+{id:"photthabba",zh:"踫觸",has:"#pathavidhatu#tejodhatu#vayodhatu",en:"touch",pli:"phoṭṭhabba"},
+{id:"ruparammana",zh:"色塵",en:"visible object",pli:"rūpārammaṇa"},
+{id:"sadda",zh:"聲",en:"sound",pli:"sadda"},
+{id:"gandha",	zh:"香",	en:"odour",id:"gandha",pli:"gandha"},
+{id:"rasarammana",	zh:"味",	en:"taste",pli:"rasārammaṇa"},
+{id:"dhammarammana",zh:"法塵",en:"mental object",pli:"dhammārammaṇa"},
+{id:"vanna",	zh:"顏色",	en:"color",pli:"vaṇṇa"},
+{id:"oja",	zh:"食素",	en:"nutritive essense",pli:"oja"},
+{id:"avinibbhogarupa",
+	has:"#4mahabhuta#gandha#rasa#vanna#oja",
+	en:"8 inseparable rupa",
+	zh:"八不離色",
+	pli:"avinibbhogarūpa"
+},
+{id:"jivita",	en:"life faculty",	zh:"命根色",pli:"jīvita"},
+
+
+{id:"kammasamutthana",	zh:"業生",en:"kamma born",pli:"kammasamuṭṭhāna",has:"#8kalapa#indriya10#jivita9#bhava10#hadaya10#akasadhatu"},
+{id:"cittasamutthana",	zh:"心生",def:"心在最強的生時產生色法",has:"#8kalapa#5vikararupa#sadda#akasadhatu",en:"mind born",pli:"cittasamuṭṭhāna"},
+{id:"utusamutthana",	zh:"時節生",has:"#8kalapa#rupassalahuta#rupassamuduta#rupassakammannata#sadda#akasadhatu",en:"temperature born",pli:"utusamuṭṭhāna"},
+{id:"aharasamutthana",	zh:"食生",def:"10~12代，一天食物可維持七天",has:"#8kalapa#rupassalahuta#rupassamuduta#rupassakammannata#akasadhatu",en:"nutriment born",pli:"āhārasamuṭṭhāna"},
+{id:"4rupasamutthana",zh:"4色法生起之源",has:"#kammasamutthana#cittasamutthana#utusamutthana#aharasamutthana",en:"four mode of origination of matter",pli:"rūpasamuṭṭhāna"},
+{id:"kalapa",
+	is:"#rupadhamma",
+	has:"#avinibbhogarupa",
+	types:"#8kalapa#9kalapa#10kalapa#11kalapa#12kalapa#13kalapa",
+	zh:"色聚",en:"particle",pli:"kalāpa"
+},
+{id:"kammajakalapa",
+	is:"#kalapa",
+	has:"#jivita",
+	attr:"#kammasamutthana",
+	zh:"業生色聚",
+	en:"kamma born kalāpa",
+	pli:"kammajakalapa"
+},
+{id:"cittajakalapa",
+	is:"#kalapa",
+	attr:"#cittasamutthana",
+	zh:"心生色聚",
+	en:"mind born kalāpa",
+	pli:"cittaja kalāpa"
+},
+{id:"utujakalapa",
+	is:"#kalapa",
+	attr:"#utusamutthana",
+	zh:"時節生色聚",
+	en:"temperature born kalāpa",
+	pli:"utuja kalāpa"
+},
+{id:"aharajakalapa",
+	is:"#kalapa",
+	attr:"#aharasamutthana",
+	zh:"食生色聚",
+	en:"nutriment born kalāpa",
+	pli:"āhāraja kalāpa"
+},
+{id:"cakkhupasada",stem:"#cakkhu",en:"eye translucency",zh:"眼浄色",pli:"cakkhupasada"},
+{id:"sotapasada",stem:"#sota",en:"ear translucency",zh:"耳浄色",pli:"sotapasada"},
+{id:"ghanapasada",stem:"#ghana",en:"nose translucency",zh:"鼻浄色",pli:"ghānapasada"},
+{id:"jivhapasada",stem:"#jivha",en:"tongue translucency",zh:"舌浄色",pli:"jivhāpasada"},
+{id:"kayapasada",stem:"#kaya",en:"body translucency",zh:"身浄色",pli:"kāyapasada"},
+{id:"pasada",
+	attr:"#kammasamutthana",zh:"明淨色",	en:"translucency",pli:"pasada",
+	types:"#cakkhupasada#sotapasada#ghanapasada#jivhapasada#kayapasada"
+},
+{id:"8kalapa",has:"#avinibbhogarupa",zh:"八法聚",	en:"octad kalapa",pli:"aṭṭhaka kalāpa"},
+{id:"9kalapa",has:"#avinibbhogarupa",zh:"九法聚",	en:"nonad kalapa",pli:"navaka kalāpa"},
+{id:"10kalapa",has:"#avinibbhogarupa",zh:"十法聚",	en:"decad kalapa",pli:"dasaka kalāpa",},
+{id:"11kalapa",has:"#avinibbhogarupa",zh:"十一法聚",	en:"un-decad kalapa",pli:"ekādasaka kalāpa",},
+{id:"12kalapa",has:"#avinibbhogarupa",zh:"十二法聚",	en:"dodecad kalapa",pli:" dvidasaka kalāpa",},
+{id:"13kalapa",has:"#avinibbhogarupa",zh:"十三法聚",	en:"tridecad kalapa",pli:" teḷasa kalāpa",},
+{id:"indriya10",zh:"五根十法聚",en:"faculty decad kalapa",pli:"indriya dasaka"},
+{id:"cakkhu10",
+	is:"#kammajakalapa#10kalapa",
+	has:"#cakkhupasada",
+	pli:"cakkhu dasaka kalāpa",
+	zh:"眼十法聚",
+	en:"eye decad kalapa"
+},
+{id:"sota10",
+	is:"#kammajakalapa#10kalapa",
+	has:"#sotapasada",
+	pli:"sota dasaka kalāpa",
+	zh:"耳十法聚",
+	en:"ear decad kalapa"
+},
+{id:"ghana10",
+	is:"#kammajakalapa#10kalapa",
+	has:"#ghanapasada",
+	pli:"ghāna dasaka kalāpa",
+	zh:"鼻十法聚",
+	en:"nose decad kalapa"
+},
+{id:"jivha10",
+	is:"#kammajakalapa#10kalapa",
+	has:"#jivhapasada",
+	pli:"jivhā dasaka kalāpa",
+	zh:"舌十法聚",
+	en:"tongue decad kalapa"
+},  
+{id:"kaya10",
+	is:"#kammajakalapa#10kalapa",
+	has:"#kayapasada",
+	pli:"kāya dasaka kalāpa",
+	zh:"身十法聚",
+	en:"body decad kalapa"
+},
+
+{id:"bhava10",
+	is:"#kammajakalapa#10kalapa",
+	has:"#bhavarupa",
+	pli:"bhāva dasaka kalāpa",
+	zh:"性根十法聚",
+	en:"bhava decad kalapa"
+},
+{id:"hadaya10",
+	is:"#kammajakalapa#10kalapa",
+	has:"#hadayarupa",
+	zh:"心十法聚",
+	en:"heart decad kalapa",
+pli:"hadaya dasaka kalāpa",
+},
+{id:"jivita9",	zh:"命根九法聚",is:"#kammajakalapa#9kalapa",has:"#jivita",en:"life nonad kalapa",pli:"jīvitanavaka"},
+
+
+{id:"cittaja8",	zh:"心生純八法聚",is:"#cittajakalapa#8kalapa",en:"mind born pure octad kalapa",pli:"cittaja suddhaṭṭhaka"},
+{id:"kayavinnatti9",	zh:"身表九法聚",is:"#cittajakalapa#9kalapa",has:"#kayavinnatti",en:"bodily intimation nonad kalapa",pli:"kāyaviññatti navaka"},
+{id:"vacivinnatti9",	zh:"語表十法聚",is:"#cittajakalapa#10kalapa",has:"#vacivinnatti#sadda",en:"vocal intimation nonad kalapa",pli:"vacīviññatti dasaka"},
+{id:"lahutadi11",	zh:"色輕快性十一法聚",is:"#cittajakalapa#utujakalapa#aharajakalapa#11kalapa",has:"#rupassalahuta#rupassamuduta#rupassakammannata",en:"lightness un-decad kalapa",pli:"lahutā ekādasaka"},
+
+
+{id:"kayavinnatti12",	zh:"身表色輕快性十二法聚",is:"#cittajakalapa#12kalapa",has:"#kayavinnatti#rupassalahuta#rupassamuduta#rupassakammannata",en:"bodily intimation and lightness triad dodecad kalapa",pli:"kāyaviññatti dvidasaka"},
+{id:"vacivinnatti13",	zh:"語表色輕快性十三法聚",is:"#cittajakalapa#13kalapa",has:"#vacivinnatti#sadda#rupassalahuta#rupassamuduta#rupassakammannata",en:"vocal intimation and lightness triad tridecad kalapa",pli:"vacīviññatti navaka"},
+
+{id:"sadda9",	zh:"入出息心生聲九法聚",is:"#cittajakalapa#9kalapa",has:"#sadda",en:"anapana mind born sound nonad kalapa",pli:"assāsa passāsa cittaja sadda navaka",source:"智慧之光四版pg108"},
+
+{id:"sadda12",	zh:"入出息心生聲色輕快十二法聚",is:"#cittajakalapa#12kalapa",has:"#sadda#rupassalahuta#rupassamuduta#rupassakammannata",en:"anapana mind born sound nonad kalapa",pli:"assāsa passāsa cittaja sadda dvidasaka",source:"智慧之光四版pg108"},
+
+{id:"utuja8",	zh:"時節生純八法聚",is:"#utujakalapa#8kalapa",en:"temperature born pure octad kalapa",pli:"utuja suddhaṭṭhaka"},
+
+{id:"utujasadda9",	zh:"時節生聲九法聚",is:"#utujakalapa#9kalapa",has:"#sadda",en:"temperature born sound nonad kalapa",pli:"utuja sadda navaka",source:"智慧之光四版pg108"},
+{id:"utujasadda12",	zh:"聲色輕快十二法聚",is:"#utujakalapa#12kalapa",has:"#sadda#rupassalahuta#rupassamuduta#rupassakammannata",en:"temperature born sound dodecad kalapa",pli:"saddaa lahutā dvidasaka",source:"智慧之光四版pg108"},
+
+{id:"aharaja8",	zh:"食生純八法聚",is:"#aharajakalapa#8kalapa",en:"nutriment born pure octad kalapa",pli:"aharaja suddhaṭṭhaka"},
+{id:"catassoyoniyo",zh:"四種出生",is:"#jati",has:"#jalabuja#andaja#samsedaja#opapatika",en:"4 kinds of birth",pli:"catasso yoniyo"},
+{id:"jalabuja",zh:"胎生",en:"womb-born",pli:"jalābuja"},
+{id:"andaja",zh:"卵生",en:"womb-born",pli:"aṇḍaja"},
+{id:"samsedaja",zh:"濕生",en:"moisture-born",pli:"saṃsedajā"},
+{id:"opapatika",zh:"化生",en:"spontaneous-born",pli:"opapātikā"},
+
+//十結 pg263 
+//八正道 269
+//275四念住四正勤四神足五根五力菩提分
+
+//十二處，十八界
+
+
+{id:"32partofbody",zh:"32身分",en:"32 parts of body",has:"#20earth#12water"},
+{id:"20earth",zh:"20地界身分",has:"#kesa#loma#nakha#danta#taco#mamsa#naharu#atthi#atthiminja#vakka#hadaya#yakana#kilomaka#pihaka#papphasa#anta#antaguna#udariya#karasa#matthalunga"},
+{id:"kesa",zh:"頭髮",en:"head hair",pli:"kesā"},
+{id:"loma",zh:"身毛",en:"body hair",pli:"lomā"},
+{id:"nakha",zh:"指甲",en:"nail",pli:"nakhā"},
+{id:"danta",zh:"牙齒",en:"teeth",pli:"dantā"},
+{id:"taco",zh:"皮膚",en:"skin",pli:"taco"},
+{id:"mamsa",zh:"肉",en:"flesh",pli:"maṃsa"},
+{id:"naharu",zh:"腱",en:"sinews",pli:"nahāru"},
+{id:"atthi",zh:"骨",en:"bones",pli:"aṭṭhi"},
+{id:"atthiminja",zh:"骨髓",en:"marrow",pli:"aṭṭhimiñja"},
+{id:"vakka",zh:"腎",en:"kidney",pli:"vakka"},
+{id:"hadaya",zh:"心臟",en:"heart",pli:"hadaya"},
+{id:"yakana",zh:"肝",en:"liver",pli:"yakana"},
+{id:"kilomaka",zh:"膜",en:"membrane",pli:"kilomaka"},
+{id:"pihaka",zh:"脾",en:"spleen",pli:"pihaka"},
+{id:"papphasa",zh:"肺",en:"lungs",pli:"papphasa"},
+{id:"anta",zh:"腸",en:"intestines",pli:"anta"},
+{id:"antaguna",zh:"腸間膜",en:"mesentery",pli:"antaguṇa"},
+{id:"udariya",zh:"胃",en:"gorge",pli:"udariya"},
+{id:"karasa",zh:"糞",en:"faeces",pli:"karāsa"},
+{id:"matthalunga",zh:"腦",en:"brain",pli:"matthaluṅga"},
+{id:"12water",zh:"12水界身分",has:"#pitta#semha#pubbo#lohita#sedo#medo#assu#vasa#khelo#singhanika#lasika#mutta"},
+{id:"pitta",zh:"膽汁",en:"bile",pli:"pitta"},
+{id:"semha",zh:"痰",en:"phlegm",pli:"semha"},
+{id:"pubbo",zh:"膿",en:"pus",pli:"pubbo"},
+{id:"lohita",zh:"血",en:"blood",pli:"lohita"},
+{id:"sedo",zh:"汗",en:"sweat",pli:"sedo"},
+{id:"medo",zh:"脂肪",en:"fat",pli:"medo"},
+{id:"assu",zh:"淚",en:"tear",pli:"assu"},
+{id:"vasa",zh:"脂膏",en:"grease",pli:"vasā"},
+{id:"khelo",zh:"唾",en:"siliva",pli:"kheḷo"},
+{id:"singhanika",zh:"涕",en:"snot",pli:"siṅghānika"},
+{id:"lasika",zh:"關節滑液",en:"synovia",pli:"lasikā"},
+{id:"mutta",zh:"尿",en:"urine",pli:"mutta"},
+
+//過去五因	現在五果 現在五因 未來五果
+
+{id:"3vatta",zh:"三輪轉",types:"#kilesavatta#kammavatta#vipakavatta",en:"three rounds",pli:"vaṭṭa"},
+{id:"kilesavatta",zh:"煩惱輪",has:"#avijja#tanha#upadana",en:"round of defilements",pli:"kilesavaṭṭa"},
+{id:"kammavatta",zh:"業輪",has:"#kammabhava#sankhara",en:"round of kamma",pli:"kammavaṭṭa"},
+{id:"kammabhava",zh:"業有",en:"kammic existence",pli:"kammabhava",stem:"#kamma#bhava"},
+{id:"vipakavatta",zh:"果報輪",has:"#jati#vinnana#namarupa#salayatana#phassa#vedana",en:"round of results",pli:"vipākavaṭṭa"},
+
+//發趣法
+
+{id:"patthana",zh:"發趣",types:"#3patthana#24paccayo",en:"patthana",pli:"paṭṭhāna"},
+
+
+{id:"paccaya",zh:"緣",en:"condition",pli:"paccaya"},
+
+
+{id:"24paccayo",zh:"24緣",en:"24 conditions",types:"#6paccayo",pli:"24 paccayo"
+,has:"#hetupaccayo#arammanapaccayo#adhipatipaccayo#anantarapaccayo#samanantarapaccayo#sahajatapaccayo#annamannapaccayo#nissayapaccayo#upanissayapaccayo#purejatapaccayo#pacchajatapaccayo#asevanapaccayo#kammapaccayo#vipakapaccayo#aharapaccayo#indriyapaccayo#jhanapaccayo#maggapaccayo#sampayuttapaccayo#vippayuttapaccayo#atthipaccayo#natthipaccayo#vigatapaccayo#avigatapaccayo",stem:"#paccaya"},
+//def from 表解 12 章五十二種緣〈簡表〉 簡表
+{id:"hetupaccayo",zh:"因緣",def:"【因】對同一名聚裡的〔其餘名法〕及對〔俱生色聚〕",en:"root condition",pli:"hetupaccayo"},
+{id:"arammanapaccayo",zh:"所緣緣",def:"【任何對象或目標】對〔名聚〕",en:"object condition",pli:"ārammaṇapaccayo"},
+
+{id:"arammana",zh:"所緣",en:"object",pli:"ārammaṇa"},
+{id:"vatthu",zh:"依處",en:"base",pli:"vatthu"},
+
+
+{id:"adhipatipaccayo",zh:"增上緣",has:"#sahajataradhipatipaccayo#arammanadhipatipaccayo",en:"predominance condition",pli:"adhipatipaccayo"},
+{id:"sahajataradhipatipaccayo",zh:"俱生增上緣",def:"【#4adhipati;】對同一名聚裡的〔其餘名法〕及對〔心生色聚〕}",en:"",pli:""},
+{id:"arammanadhipatipaccayo",zh:"所緣增上緣",def:"【所緣】對〔名聚〕",en:"",pli:""},
+{id:"4adhipati",zh:"四增上",syn:"4iddhipada",en:"4 predominances",pli:"cattāro-adhipatī"},
+
+{id:"anantarapaccayo",zh:"無間緣",def:"【前一名聚】對〔後一名聚〕",en:"proximate condition",pli:"anantarapaccayo"},
+{id:"samanantarapaccayo",zh:"相續緣",def:"【前一名聚】對〔後一名聚〕",en:"contiguity condition",pli:"samanantarapaccayo"},
+{id:"sahajatapaccayo",zh:"俱生緣",en:"conascence condition",pli:"sahajātapaccayo"},
+{id:"annamannapaccayo",zh:"相互緣",en:"mutuality condition",pli:"aññamaññapaccayo"},
+{id:"nissayapaccayo",zh:"依止緣",en:"support condition",pli:"nissayapaccayo"},
+{id:"upanissayapaccayo",zh:"親依止緣",en:"decisive support condition",pli:"upanissayapaccayo"},
+{id:"purejatapaccayo",zh:"前生緣",en:"prenascence condition",pli:"purejātapaccayo"},
+{id:"pacchajatapaccayo",zh:"後生緣",def:"【後生名聚】對色身的〔前生色聚〕",en:"postnascence condition",pli:"pacchajātapaccayo"},
+{id:"asevanapaccayo",zh:"重覆緣",def:"【前一速行名聚】對〔後一速行名聚〕",en:"repetition condition",pli:"āsevanapaccayo"},
+{id:"kammapaccayo",zh:"業緣",en:"kamma condition",pli:"kammapaccayo",stem:"#kamma"},
+{id:"kamma",	zh:"業",en:"kamma",pli:"kamma"},
+{id:"vipakapaccayo",zh:"果報緣",def:"同一果報名聚裡的【名法】與〔其餘名法〕及對〔俱生色聚〕",en:"result condition",pli:"vipakapaccayo",stem:"#vipaka"},
+{id:"vipaka",zh:"果報|異熟",en:"resultant",pli:"vipāka"},
+{id:"aharapaccayo",zh:"食緣",en:"nutriment condition",pli:"āhārapaccayo",stem:"#ahara"},
+{id:"indriyapaccayo",zh:"根緣",en:"faculty condition",pli:"indriyapaccayo",stem:"#indriya"},
+{id:"jhanapaccayo",zh:"禪那緣",def:"【禪支】對同一名聚裡的〔其餘名法〕及對〔俱生色聚〕",en:"jhana condition",pli:"jhānapaccayo",stem:"#jhana"},
+{id:"maggapaccayo",zh:"道緣",def:"【道支】對同一名聚裡的〔其餘名法〕及對〔俱生色聚〕",en:"path condition",pli:"maggapaccayo",stem:"#magga"},
+{id:"sampayuttapaccayo",zh:"相應緣",def:"同一名聚裡的【名法】與〔其餘名法〕相互之間",stem:"#sampayutta",en:"associated condition",pli:"sampayuttapaccayo"},
+{id:"vippayuttapaccayo",zh:"不相應緣",stem:"#vippayutta",en:"dissociated condition",pli:"vippayuttapaccayo"},
+{id:"sampayutta",zh:"相應",en:"associated",pli:"sampayutta"},
+{id:"vippayutta",zh:"不相應",en:"dissociated",pli:"vippayutta"},
+
+{id:"atthipaccayo",zh:"有緣",en:"presence condition",pli:"sampayuttapaccayo"},
+{id:"natthipaccayo",zh:"無有緣",def:"【前一名聚】對〔後一名聚〕",en:"absence condition",pli:"vippayuttapaccayo"},
+{id:"vigatapaccayo",zh:"離去緣",def:"【前一名聚】對〔後一名聚〕",en:"disappearance condition",pli:"sampayutta"},
+{id:"avigatapaccayo",zh:"不離去緣",en:"non-disappearance condition",pli:"vippayutta"},
+
+{id:"3patthana",zh:"發趣三要",has:"#paccayadhamma#paccayuppannadhamma#paccayasatti",en:"3 factors of patthana"},
+
+{id:"paccayadhamma",zh:"緣法",en:"conditioning states",pli:"paccayadhammā",has:"#p_rupa#p_nama#p_rupa"},
+{id:"paccayuppannadhamma",zh:"緣生法",en:"conditionally arisen states",pli:"paccayuppannadhammā",has:"#pu_rupa#pu_nama#pu_rupa"},
+{id:"paccayasatti",zh:"緣力",en:"conditioning force of the condition",pli:"paccayasatti"},
+
+{id:"6paccayo",zh:"六組緣",source:"阿耨樓陀尊者",en:"6 fold conditions",pli:"chakka paccaya",has:"#p_nn#p_nnr#p_nr#p_rn#p_nrn#p_nrnr"},
+
+{id:"p_nama",zh:"緣法名法",en:"conditioning mentality",pli:"paccayanāmadhammā",stem:"#nama"},
+{id:"p_rupa",zh:"緣法色法",en:"conditioning material phenomena",pli:"paccayarūpadhammā",stem:"#rupa"},
+{id:"p_namarupa",zh:"緣法名色",en:"conditioning mentality and material phenomena",pli:"paccayanāmarūpadhammā",stem:"#namarupa"},
+{id:"pu_nama",zh:"緣生名法",en:"conditionally arisen mentality",pli:"paccayuppannanāmadhammā"},
+{id:"pu_rupa",zh:"緣生色法",en:"conditionally arisen material phenomena",pli:"paccayuppannarūpadhammā"},
+{id:"pu_namarupa",zh:"緣生名色",en:"conditionally arisen mentality and material phenomena",pli:"paccayuppannanāmarūpadhammā"},
+
+{id:"p_nn",zh:"名→名",def:" #p_nama;→ #pu_nama;",has:"#anantarapaccayo#samanantarapaccayo#asevanapaccayo#sampayuttapaccayo#natthipaccayo#vigatapaccayo",en:"nama→nama",pli:"nāma→nāma"},
+{id:"p_nnr",zh:"名→名色",def:" #p_nama;→ #pu_namarupa;",has:"#hetupaccayo#kammapaccayo#vipakapaccayo#jhanapaccayo#maggapaccayo",en:"nama→namarupa",pli:"nāma→nāmarūpa"},
+{id:"p_nr",zh:"名→色",def:" #p_nama;→ #pu_rupa;",has:"#pacchajatapaccayo",en:"nama→rupa",pli:"nāma→rūpa"},
+{id:"p_rn",zh:"色→名",def:" #p_rupa;→ #pu_nama;",has:"#purejatapaccayo",en:"rupa→nama",pli:"rūpa→nāma"},
+{id:"p_nrn",zh:"名色→名",def:" #p_namarupa;→ #pu_nama;",has:"#arammanapaccayo#upanissayapaccayo",en:"namarupa→nama",pli:"nāmarūpa→nāma"},
+{id:"p_nrnr",zh:"名色→名色",def:" #p_namarupa;→ #pu_namarupa;",has:"#adhipatipaccayo#sahajatapaccayo#annamannapaccayo#nissayapaccayo#aharapaccayo#indriyapaccayo#vippayuttapaccayo#atthipaccayo#avigatapaccayo",en:"namarupa→namarupa",pli:"nāmarūpa→nāmarūpa"},
+
+]
+	if (typeof module!=="undefined") {
+		module.exports=coreset;
+	} else {
+		window.rawdataset.push(coreset);
+	}
+})();
+//--></script>
+<script><!--
+(function(){
+const propername=[
+{id:"sanjiva",zh:"等活地獄",en:"-",pli:"Sañjiva",def:"A Niraya. Beings born there are subjected to numerous tortures, but contrive to survive them; hence the name. J.v.266, 270. PPND 想辦法從種種酷刑中存活故得名"},
+{id:"kalasutta",zh:"黑繩地獄",en:"-",pli:"（kāḷasutta）、",def:"One of the principal hells (J.v.266, 267, 268). Beings born there are placed on a floor of heated iron, marked with a black thread made red hot, and then cut into pieces along the markings (J.v.270).。PPND 在鐵地板上，被熾紅的線按照標示切割成塊。"},
+{id:"sanghata",zh:"眾合地獄",en:"-",pli:"Sanghāta",def:"It is so called because massive rocks of heated iron meet and crush the victims. J.v.256, 270.。"},
+{id:"roruva",zh:"號叫地獄",en:"-",pli:"roruva",def:"Beings were presumably born there as a result of casting aspersions on the Dhamma (S.i.30) miserliness (e.g., J.iii.299) adultery (J.vi.237)Sometimes (J.v.266) two Roruvas are mentioned which the scholiast (J.v.271) explains as being Jālaroruva and Dhūmaroruva; in the first beings have red hot flames blown into their bodies, and in the second, noxious gases (khāradhūma).Buddhaghosa says (SA.i.64) that Jālaroruva is another name for Avīci, and that the Niraya is so called because beings shout while being burnt there (aggimhi jalante punappunam ravanti).。PPND 推測是謗法者投生處，吝嗇、通奸有時也會。學者稱有兩種，羅網號叫Jālaroruva和毒煙號叫Dhūmaroruva，第一種被熱焰吹燒。覺者尊者認為jalaroruva 是阿鼻地獄的別名"},
+{id:"maharoruva",zh:"大號叫地獄",en:"-",pli:"Mahāroruva",def:"S.i.92; DhA.iv.79.。"},
+{id:"tapana",zh:"燃燒地獄",en:"-",pli:"tapana",def:"Beings born there are pierced by heated stakes and they remain transfixed, motionless. J.v.266, 271, 275.。PPND 被熱矛釘住動不了"},
+{id:"mahatapana",zh:"大燃燒地獄",en:"-",pli:"mahātāpana",def:"-"},
+{id:"avici",zh:"阿鼻地獄|無間地獄",has:"#anantariya",en:"-",pli:"avīci",def:"One of the eight great purgatories (mahāniraya) (J.v.266). It is ten thousand leagues in extent and forms part of a cakkavāla (SnA.ii.443).",def:"當中阿鼻地獄又是最下層及為恐怖在每一個大地獄的四方各有小，因此一共百三十六  個地獄。 個地獄。 個地獄。概要精解pg180"},
+
+{id:"tiracchanayoni",zh:"畜生道",def:"雖然畜道的痛苦並不像地獄那麼悲慘，但由於其處的痛苦還是遠超越快樂，以及在並沒有適合的時機造善業，所以把它歸納於惡趣地。",en:"the animal kingdom",pli:"tiracchānayoni"},
+{id:"pettivisaya",zh:"餓鬼道",def:"時常受到飢餓、口渴及其他病痛。餓鬼並沒有自己的世界。他們與人類住在同一個世界，如在森林、沼澤墳場裡等。一般上人們並不能看到他們，除非把自己顯現出來給人看。天眼通的人也能看到他們。",en:"the sphere of petas",pli:"pettivisaya"},
+{id:"asurakaya",zh:"阿修羅道",def:"阿修羅包括了幾種有情。諸論師指出，在惡趣地裡的阿修羅是與餓鬼類似長期遭受折磨的有情。應區別惡趣地的阿修羅和在三十天與諸神鬥爭，後者是屬於三十天的神。後者是屬於三十天的神。",en:"the host of asura",pli:"asurakaya"},
+
+{id:"catummaharajika",zh:"四大王天",def:"壽命500天年。約人間九百萬年。Dhatarattha of the East, Virūlhaka of the South, Virūpakkha of the West, and Vessavaṇa of the North (D.ii.207f; iii.194f).PPND 東方持國天王，統領#gandhabba;。南方增長天王，統領#kumbhanda;。西方廣目天王，統領諸#naga;北方多聞天王毗沙門，統領#yakkha;眾",en:"realm of the four great kings",pli:"cātummahārājika"},
+{id:"tavatimsa",zh:"三十三天|帝釋天",def:"壽命1000天年。約人間三千六百萬年。古時有三十位把自己的生命奉獻於 成為他人的福利善男子投生處。該界的大王是帝釋（Sakka），亦名為「因陀羅」 （ Indra），住在該界首府「善見」（Sudassana）裡的最勝殿Vejayanta",en:"realm of the thirty-three gods",pli:"tāvatiṃsa"},
+{id:"sakka",zh:"帝釋",en:"-",pli:"Sakka"},
+
+{id:"yama",zh:"夜摩天",def:"2000天年，約人間一億四千四百萬年。",en:"realm of the yāma Gods",pli:"yāmā"},
+{id:"tusita",zh:"兜率天",def:"4000天年，約人間五億七千六百萬年。",en:"delightful realm",pli:"tusitā"},
+{id:"nimmanarati",zh:"化樂天",def:"8000天年，約人間二十三億四百萬年。",en:"realm of gods who rejoice in their own creation",pli:"nimmānarati"},
+{id:"paranimmitavasavatti",zh:"他化自在天",def:"16000天年，約人間九十二億一千六百萬年。",en:"real of gods who lord over the creations of others",pli:"paranimmitavasavatti"},
+
+{id:"gandhabba",zh:"乾達婆",def:"以香氣為滋養的神,服侍帝釋的樂神之一。It is a disgrace for a monk to be born in the Gandhabba-world (D.ii.221, 251, 273f). PPND。比庫投生為乾達婆是一種恥辱。",pli:"gandhabba"},
+{id:"kumbhanda",zh:"鳩槃荼",def:"睪丸有如甕形的夜叉",stem:"陰囊（aṇḍa）狀如甕形（kumbha），故得此名",pli:"kumbhaṇḍa"},
+
+{id:"yakkha",zh:"夜叉",def:"非人的一種，是地位比諸天低但又具有諸天威力的一類鬼神，為北方韋沙瓦納天王所統領。亞卡的種類很多，有些是兇殘暴戾、能傷害人類的惡鬼，有些是依止山川樹木而居的樹神、地居天，還有些則是如有大福德、大威勢的諸天。在《中部·小愛行盡經》中，甚至把沙咖天帝也稱為亞卡。漢傳佛教依梵語yakùa音譯為夜叉、藥叉等。",en:"kind of ghost,goblin. or ogre",pli:"yakkha"},
+{id:"naga",zh:"龍",def:"身長無足、類似蛇的有情類，多居住在江河湖海中，有呼云喚雨之神力",en:"dragon",pli:"nāga"},
+{id:"pathamajjhanabhumi",zh:"初禪天",en:"first jhana plane",pli:"paṭhamajjhānabhūmi",has:"#brahmaparisajja#brahmapurohita#mahabrahma"},
+{id:"brahmaparisajja",zh:"梵衆天",def:"1/3 中劫",en:"brahma's retinue",pli:"brahmapārisajja"},
+{id:"brahmapurohita",zh:"梵輔天",def:"1/2 中劫",en:"brahma ministers",pli:"brahmapurohita"},
+{id:"mahabrahma",zh:"大梵天",def:"1中劫",en:"maha brahma",pli:"mahābrahmā"},
+{id:"dutiyajjhanabhumi",zh:"二禪天",en:"second jhana plane",pli:"dutiyajjhānabhūmi",has:"#parittabha#appamanabha#abhassara"},
+{id:"parittabha",zh:"少光天",def:"2#mahakappa;",en:"minor lustre",pli:"parittābha"},
+{id:"appamanabha",zh:"無量光天",def:"4#mahakappa;",en:"infinite lustre",pli:"appamāṇābha"},
+{id:"abhassara",zh:"光音天",def:"8#mahakappa;",en:"radiant lustre",pli:"ābhassara"},   
+
+{id:"tatiyajjhanabhumi",zh:"三禪天",en:"third jhana plane",pli:"tatiyajjhānabhūmi",has:"#parittasubha#appamanasubha#subhakinha"},
+{id:"parittasubha",zh:"少淨天",def:"16#mahakappa;",en:"minor aura",pli:"parittasubha"},
+{id:"appamanasubha",zh:"無量淨天",def:"32#mahakappa;",en:"infinite aura",pli:"appamāṇasubha"},
+{id:"subhakinha",zh:"遍淨天",def:"64#mahakappa;",en:"steady aura",pli:"subhakiṇha"},
+
+{id:"catutthajjhanabhumi",zh:"四禪天",en:"fourth jhana plane",pli:"catukkhajjhānabhūmi",has:"#vehapphala#asannasatta#suddhavasa"},
+
+{id:"vehapphala",zh:"廣果天 ",def:"500#mahakappa;",en:"great reward",pli:"vehapphala"},
+{id:"asannasatta",zh:"無想有情天",def:"500#mahakappa;",en:"non-percipient beings",pli:"asaññasattā"},
+{id:"suddhavasa",zh:"5淨居天",has:"#aviha#atappa#sudassa#sudassi#akanittha",def:"限三果聖者投生",en:"pure abodes",pli:"suddhāvāsa"},
+{id:"aviha",zh:"無煩天",def:"1000#mahakappa;",en:"durable realm",pli:"avihā"},
+{id:"atappa",zh:"無熱天",def:"2000#mahakappa;",en:"serene realm",pli:"atappā"},
+{id:"sudassa",zh:"善現天",def:"4000#mahakappa;",en:"beautiful realm",pli:"sudassā"},
+{id:"sudassi",zh:"善見天",def:"8000#mahakappa;",en:"clear sighted realm",pli:"sudassī"},
+{id:"akanittha",zh:"色究竟天",def:"16000#mahakappa;",en:"highest realm",pli:"akaniṭṭhā"},
+
+{id:"mahakappa",zh:"大劫",def:"100年用絲布拭7由旬寬高的花岡岩（S.15:5/ii, 181-82)",en:"great aeon",pli:"māhakappa"},
+
+{id:"akasanancayatanabhumi",zh:"空無邊處",def:"20000#mahakappa;",en:"realm of infinite space",pli:"ākasānañcāyatanabhūmi"},
+{id:"vinnanancayatanabhumi",zh:"識無邊處",def:"40000#mahakappa;",en:"realm of infinite consciousness",pli:"viññāṇañcāyatanabhūmi"},
+{id:"akincannayatanabhumi",zh:"無所有處",def:"60000#mahakappa;",en:"realm of nothingness",pli:"ākincaññāyatanabhūmi"},
+{id:"nevasannanasannayatanabhumi",zh:"非想非非想處",def:"84000#mahakappa;",en:"real of neither perception nor non-perception",pli:"ākincaññāyatanabhūmi"},
+
+]
+	if (typeof module!=="undefined") {
+		module.exports=propername;
+	} else {
+		window.rawdataset.push(propername);
+	}
+})();
+//--></script>
+<script><!--
+(function(){
+const coreset=[
+{id:"patimokkhanidanan",zh:"制戒因緣",en:" ",pli:" ",def:"比丘戒制戒因緣及犯無犯相",types:"#nd_venue#nd_person",has:"#4parajika_n#13sanghadisesa_n#2aniyata_n#30nissaggiyapacittiya_n#92pacittiya_n#4patidesaniya_n#75sekhiya_n#adhikarana_n", stem:"#patimokkha"},
+
+{id:"nd_venue",zh:"制戒地點",en:"-",pli:"-",has:"#nd_svt#nd_ap#nd_kld#nd_gst#nd_svt#nd_ng#nd_alv#nd_rj#nd_vsl"},
+{id:"nd_svt",zh:"佛在舍衛城時",en:" ",pli:"Sāvatthī"},
+{id:"nd_ap",zh:"佛在舍衛城祇樹給孤獨園時",en:" ",pli:"Anātha-piṇḍika nidana",def:"在此所制之戒"},
+{id:"nd_rj",zh:"佛在王舍城時",en:" ",pli:"Rājagaha"},
+{id:"nd_kld",zh:"佛在王舍城竹林精舍時",en:" ",pli:"Veḷuvane Kalandakanivāpe"},
+{id:"nd_gst",zh:"佛在喬賞彌的瞿師羅園時",en:" ",pli:"Ghositārāma"},
+{id:"nd_ksb",zh:"佛在喬賞彌時",en:" ",pli:"Kosambī"},
+{id:"nd_ng",zh:"佛在釋迦國迦毗羅衛城的尼拘律園時",en:" ",pli:"nigrodha"},
+{id:"nd_alv",zh:"佛在阿羅毗的阿伽羅精舍時",en:" ",pli:"Āḷavī"},
+{id:"nd_vsl",zh:"佛在毗舍離時",en:" ",pli:"Vesālī"},
+{id:"nd_deer",zh:"佛在婆祇鱷魚山恐怖林的鹿苑時",en:" ",pli:"migadāya"},
+
+{id:"nd_person",zh:"相關人物",en:" ",pli:" ",has:"#p_chabbaggiya#p_sattarasavaggiye#p_udayi#p_dabba#p_channa#p_upananda"},
+{id:"p_chabbaggiya",zh:"六比丘",en:" ",pli:"chabbaggiya bhikkhū"},
+{id:"p_sattarasavaggiye",zh:"十七比丘",en:" ",pli:"sattarasavaggiye bhikkhū"},
+{id:"p_udayi",zh:"優陀夷比丘",en:" ",pli:"udāyī bhikkhū"},
+{id:"p_dabba",zh:"踏婆比丘",en:" ",pli:"dabba mallaputta"},
+{id:"p_channa",zh:"闡陀比丘",en:" ",pli:"channa bhikkhū"},
+{id:"p_upananda",zh:"跋難陀比丘",en:" ",pli:"Upananda bhikkhū"},
+
+
+{id:"4parajika_n",zh:"四驅擯",en:" ",has:"#pr1n#pr2n#pr3n#pr4n",pli:"Pārājikā"},
+{id:"pr1n",stem:"#pr1|戒條",en:" ",pli:" ",zh:"1.不淨行",bkn_pr:1	
+,nd:" #nd_vsl;，須提那比丘回家鄉乞食，他的母親告訴他說，如果他沒有留下後代，將來財產會被國王沒收。須提那便和以前的妻子行不淨行。",fact:"1.對象：(1)人﹑鬼神﹑畜生三趣中。(2)雌性的肛門﹑陰道(passāvamagga小便道)﹑口。(3)雄性﹑無男性器官者(paṇḍaka：漢譯「黃門」)的肛門﹑口。\n"+
+"2.動機：(1)主動：自己生起慾心而行不淨行。(2)被動：不是出於本身慾念所構成的不淨行。\n"+
+"3.方式：置入生殖器官。\n"+"4.結果：接受樂受。"
+,nooff:"1.不是故意的。2.被動且未產生樂受。3.比丘精神失常﹑情緒不穩定(	khittacitta。khitta是「亂﹑攪動」﹑受病痛所苦。4.第一個犯的人(*)。"},
+
+{id:"pr2n",stem:"#pr2|戒條",en:" ",pli:" ",zh:"2.偷盜",bkn_pr:2, note:true
+,nd:" #nd_rj;，但尼迦比丘燒土造瓦房。佛陀認為燒土會傷及眾生，命比丘拆除瓦房。但尼迦改用木材造房子，尚未得到頻婆娑羅王的允許，就自行取走災害時備用的木材；由於但尼迦是出家人，國王沒有將他送交法辦。"
+,fact:"1.對象：(1)屬於某人。(2)價值五摩沙迦(*)或五摩沙迦以上的物品。\n2.動機：偷盜(*)。\n3.方式：取離原處。\n"
+,nooff:"1.以為是自己的東西。2.確定物主會樂意給予(*)。3.死者﹑畜生的東西。4.以為是別人不要的東西(*)。5.暫時借用。6.比丘精神失常﹑情緒不穩定﹑受病痛所苦。"},
+
+{id:"pr3n",stem:"#pr3|戒條",en:" ",pli:" ",zh:"3.殺人",bkn_pr:3
+,nd:" #nd_vsl;，教導比丘不淨觀，讚歎入不淨三昧。諸比丘修不淨觀後厭棄自身，請求鹿杖比丘(*)殺他們；鹿杖殺比丘後生起邪念(*)，以為殺人即是助人解脫，有時一天連殺六十個比丘。"
+,fact:"1.對象：人類(*)。、\n2.動機：殺害。\n"+
+"3.方式：(1)自己殺人：以器具或藥物等致人於死﹑讚歎死亡﹑設陷阱。\n"+
+"(2)唆使殺人：用言語或書信，間接命令別人去殺。\n"+
+"4.結果：使人斷送性命。"
+,nooff:"1.無意。2.不小心。3.不是故意殺人。4.比丘精神失常。"},
+
+{id:"pr4n",title:"大妄語",stem:"#pr4|戒條",en:" ",pli:" ",zh:"4.不實自稱有上人法",bkn_pr:4
+,nd:" #nd_vsl;，跋耆一帶鬧飢荒，生活艱苦。婆裘摩河邊的比丘們為了安穩度過雨安居，尚未證得初禪以上的境界，卻互相讚歎以騙取居士的供養。"
+,fact:"1.對象：人類\n2.方式：不實的言語或行為\n3.動機：欺騙別人，使人認為自己有初禪以上的境界。"
+,nooff:"1.增上慢的人。2.不是故意騙人。3.比丘精神失常﹑情緒不穩定﹑受病痛所苦。"},
+
+
+{id:"13sanghadisesa_n",zh:"十三僧殘",en:" ",has:"#sd1n#sd2n#sd3n#sd4n#sd5n#sd6n#sd7n#sd8n#sd9n#sd10n#sd11n#sd12n#sd13n",pli:"Saṅghādisesā",def:"根據〈語詞解釋〉 112頁：違犯僧殘戒的比丘，其別住﹑出罪等事，不能由一個或數個比丘作決定，而必須由二十位比丘一起表決。\n"+
+"。《根有律》 617b7：如果比丘犯了四驅擯罪，就會被逐出僧團，不能和僧眾共住；但是犯了這十三個僧殘戒的話，還是可以留在僧團中。也就是說，由最初（ādi）的舉罪到最後（sesa）的出罪，都必須由二十位僧眾（saṅgha）決定。而且相對於驅擯罪，犯了這十三條戒的比丘還可以「殘留」在僧團中，因此漢譯「僧殘」，保留了「由僧眾決定」以及「殘留在僧團中」的意思。筆者也沿用此語。\n"+
+"平川彰在《原始佛教の研究》257頁中提到，梵文的atisesa還保留「殘餘」的意思，巴利文的ādisesa可能是由atisesa轉化而來，但是卻已經失去「殘留」的意思了。\n"+
+"至於僧殘戒的處理方式，Vin.III, 186頁中說明，十三僧殘的前九條戒，初犯便構成僧殘，十至十三項則是犯後受勸三次不改才構成犯罪。如果犯了僧殘戒，覆藏幾天，便離開僧眾「別住」幾天（parivāsa；詳見《小品》〈別住犍度〉，Vin.II, p31～37）；別住後，再行「摩那埵」（mānatta）──六夜別住； 之後，由二十位比丘羯磨決定是否能夠出罪，如果不足二十位比丘就不能舉行「出罪羯磨」（詳見《小品》〈羯磨犍度〉，Vin.III, p38～72）。"},
+
+{id:"sd1n",title:"自瀆",stem:"#sd1|戒條",en:" ",pli:" ",zh:"1.故意出精"
+,nd:" #nd_svt;，施越比丘由於慾念惱害，不喜歡修行。#p_udayi;見施越憔悴枯瘦，便教他用手自慰，以療貪慾。"
+,fact:"1.方式：出精(*)。\n2.動機：故意。"
+,nooff:"1.夢遺。2.不是故意洩精。3.比丘精神失常﹑情緒不穩定﹑受病痛所苦。"},
+
+{id:"sd2n",title:"觸女",stem:"#sd2|戒條",en:" ",pli:" ",zh:"2.染愛心碰觸女人的身體"
+,nd:" #nd_svt;，#p_udayi;所住的精舍十分優美清淨，因此有很多人前往參觀。某日優陀夷趁機走在一個婆羅門的妻子後面，觸摸她的身體，婆羅門知道後非常生氣，譏嫌佛教沙門。"
+,fact:"1.對象：人道中的女性。\n2.方式：(1)碰觸。(2)撫摸。(3)牽、拉。(4)推、抱、捉3。\n3.動機：貪愛。"
+,nooff:"1.無意的。2.不小心的。3.沒有樂受。4.比丘精神失常﹑情緒不穩定﹑受病痛所苦。"},
+
+{id:"sd3n",title:"穢語",stem:"#sd3|戒條",en:" ",pli:" ",zh:"3.染愛心對女人講粗話"
+,nd:" #nd_svt;，#p_udayi;所住的精舍十分優雅清淨。某日很多女人前往參觀，優陀夷請她們進去精舍坐，故意對他們說一些有關肛門、陰道等淫穢的話。"
+,fact:"1.對象：女人\n2.方式：說出像少年男女間調情的淫穢語詞\n3.動機：愛慾"
+,nooff:"1.教學需要1。2.比丘精神失常。"},
+
+{id:"sd4n",title:"求婬",stem:"#sd4|戒條",en:" ",pli:" ",zh:"4.要求女人服侍不淨行"
+,nd:" #nd_svt;，#p_udayi;到居士家接受供養，對一婦人說，「不淨行是最上的侍奉」，婦人便入室解衣。優陀夷突然改變心意而離去。"
+,fact:"1.對象：女人\n2.方式：(1)讚歎自己。(2)要求對方用不淨行侍奉。\n3.動機：愛慾。"
+,nooff:"1.要求用衣服﹑食物﹑房舍﹑藥物侍奉。2.比丘精神失常。"},
+
+{id:"sd5n",title:"作媒",stem:"#sd5|戒條",en:" ",pli:" ",zh:"5.為男女傳達情意",bkn_sd:5
+,nd:" #nd_svt;，#p_udayi;在城內認識許多居士，經常去拜訪他們，順便為一些未婚男女介紹對象。某日優陀夷為一位外道信徒提親，婚後這位外道信徒虐待其妻，優陀夷因而受譏嫌。"
+,fact:"1.對象：男性和女性\n2.方式：(1)聽受話語。(2)傳給對方。(3)再把對方的回話帶回來\n3.動機：撮合男女雙方"
+,nooff:"1.為了僧團﹑塔廟(*)﹑病人而往返處理事務。2.為離婚夫婦說合 (先前已經在一起，後來關係破裂)(*)。3.比丘精神失常。"},
+
+{id:"sd6n",title:"建屋",stem:"#sd6|戒條",en:" ",pli:" ",zh:"6.無施主建屋子不合規定"
+,nd:" #nd_kld;，阿毗羅一地的比丘為了蓋自己的房子，不斷地向居士勸募建材，居士們苦惱不已，一見到比丘就趕緊迴避。迦葉見狀告訴佛陀。"
+,fact:"1.對象：自己要住的小房子\n2.方式：(1)房子大小超過規定的標準。(2)蓋在不清淨﹑不寬敞的地方(*)。(3)沒有請比丘們去選定地點。"
+,nooff:"1.蓋在山洞內的窯洞﹑草房。2.替別人蓋。3.比丘精神失常。"},
+
+{id:"sd7n",title:"建屋",stem:"#sd7|戒條",en:" ",pli:" ",zh:"7.有施主建大房子不合規定"
+,nd:" #nd_gst;；某施主要為#p_channa;建大寺院，闡陀在清除地面時，砍倒一棵民眾供奉的大樹，受到譏嫌。"
+,fact:"1.對象：施主發心建造的房舍。\n2.方式：(1)蓋在不清淨﹑不寬敞的地方。(2)沒有請比丘們去選定地點。"
+,nooff:"1.蓋在山洞內的窯洞﹑草房。2.替別人蓋。3.比丘精神失常。"},
+
+{id:"sd8n",title:"誣告",stem:"#sd8|戒條",en:" ",pli:" ",zh:"8.無憑據毀謗比丘犯驅擯戒",bkn_sd:8
+,nd:" #nd_kld;，慈﹑地二比丘誤會#p_dabba;在居士面前中傷他們，唆使慈比丘尼至世尊處誣告#p_dabba;與她行不淨行。"
+,fact:"1.對象：行為清淨的比丘\n2.方式：(1)自己沒有看見﹑聽見﹑懷疑, 卻(2)毀謗某比丘犯驅擯罪\n3.動機：瞋恨"
+,nooff:"1.誤會—將清淨的事誤為不清淨，或將不清淨的事誤為清淨。2.比丘精神失常。"},
+
+{id:"sd9n",title:"毀謗",stem:"#sd9|戒條",en:" ",pli:" ",zh:"9.穿鑿附會地毀謗比丘犯驅擯戒",bkn_sd:9
+,nd:" #nd_kld;，慈﹑地二比丘下耆闍窟山見兩隻羊交配，卻告訴其他比丘說，看見#p_dabba;與慈比丘尼行不淨行。"
+,fact:"1.對象：行為清淨的比丘。\n2.方式：(1)看見﹑聽見﹑懷疑某些事情，卻 (2)附會某比丘犯驅擯罪。\n3.動機：瞋恨。"
+,nooff:"1.誤會－誤解了實情(*)，自己或使人責問。2.比丘精神失常。"},
+
+{id:"sd10n",title:"破僧",stem:"#sd10|戒條",en:" ",pli:" ",zh:"10.分裂僧團",bkn_sd:14
+,nd:" #nd_kld;，提婆達多以世尊不肯規定僧團嚴守五項頭陀行8為藉口，毀謗世尊貪著享受。"
+,fact:"1.對象：和合的僧團。\n2.方式：(1)結黨(*)、(2)企圖使僧團分裂或(3)產生糾紛。\n3.結果：受勸三次後，仍不肯悔改。"
+,nooff:"1.沒有被勸告。2.受勸三次內悔改。3.比丘精神失常﹑情緒不穩定﹑受病痛所苦。"},
+
+{id:"sd11n",title:"參與破僧",stem:"#sd11|戒條",en:" ",pli:" ",zh:"11.與分裂僧團的比丘同黨",bkn_sd:15
+,nd:" #nd_kld;，提婆達多企圖離間僧團﹑製造糾紛，受到比丘們責難，拘迦利迦等比丘卻追隨提婆達多，加入他的集團，並且為他辯白。"
+,fact:"1.對象：破壞僧團的比丘。\n2.方式：(1)加入他的黨派。(2)為他辯白。\n3.結果：受勸三次後，仍不肯悔改。"
+,nooff:"1.沒有被勸告。2.受勸三次內悔改。3.比丘精神失常﹑情緒不穩定﹑受病痛所苦。"},
+
+{id:"sd12n",title:"固執",stem:"#sd12|戒條",en:" ",pli:" ",zh:"12.不接受如法的勸誡",bkn_sd:16
+,nd:" #nd_gst;，#p_channa;作錯事，比丘們勸他改正，他反而惡口相向，不加理會。"
+,fact:"1.對象：前來勸誡的比丘。\n2.方式：(1)不聽勸告且(2)惡口相向。\n3.結果：受勸三次後，仍不肯悔改。"
+,nooff:"1.沒有被勸告。2.受勸三次內悔改。3.比丘精神失常。"},
+
+{id:"sd13n",title:"污家",stem:"#sd13|戒條",en:" ",pli:" ",zh:"13.惡行敗壞在家人",bkn_sd:17
+,nd:" #nd_ap;，馬師﹑滿宿兩比丘住雞吒山，因行為不檢而敗壞了居士。比丘們前往勸誡時，兩比丘不聽勸誡反而責罵他們。"
+,fact:"1.對象：前來勸誡的比丘。\n2.方式：(1)不聽勸告，而且(2)加以責罵毀謗。\n3.結果：受勸三次後，仍不肯悔改。"
+,nooff:"1.沒有被勸告。2.受勸三次內悔改。3.比丘精神失常。"},
+
+{id:"2aniyata_n",zh:"二不定",en:" ",has:"#ay1n#ay2n",pli:"Aniyatā"},
+
+
+{id:"ay1n",title:"獨處",stem:"#ay1|戒條",en:" ",pli:" ",zh:"1.單獨與女人坐在可行不淨行處"
+,nd:" #nd_ap;，#p_udayi;單獨與女人坐在可行不淨行的隱蔽處，毗舍佉(*)看見後加以勸誡，但優陀夷不接受勸告，毗舍佉便將此事告訴其他比丘。"
+,fact:"1.對象：女人\n2.地點：便於行不淨行的隱蔽處\n3.方式：祕密地坐在一起\n4.結果：視其所做的事而定"
+,nooff:"1.不是坐在隱秘處。2.不是和女人坐在一起。3.沒有作出違犯戒律的事。"},
+
+{id:"ay2n",title:"獨處2",stem:"#ay2|戒條",en:" ",pli:" ",zh:"2.單獨與女人坐在可說淫穢語處"
+,nd:" #nd_ap;，#p_udayi;單獨與女人坐在適於說淫穢言語的地方，毗舍佉看見後加以勸誡，但優陀夷不受勸；毗舍佉便將此事告訴其他比丘。"
+,fact:"1.對象：女人。\n2.地點：適於說淫穢言語的地方。\n3.方式：共坐。\n4.結果：視其所做的事而定。"
+,nooff:"1.不是坐在可以說淫穢語的地方。2.不是和女人坐在一起。3.沒有作出違犯戒律的事。"},
+
+{id:"30nissaggiyapacittiya_n",zh:"三十捨懺",en:" ",pli:"nissaggiyapācittiyā",has:"#np_g1n#np_g2n#np_g3n"},
+
+{id:"np_g1n",zh:"np1-10",en:" ",pli:" ",has:"#np1n#np2n#np3n#np4n#np5n#np6n#np7n#np8n#np9n#np10n"},
+{id:"np_g2n",zh:"np11-20",en:" ",pli:" ",has:"#np11n#np12n#np13n#np14n#np15n#np16n#np17n#np18n#np19n#np20n"},
+{id:"np_g3n",zh:"np21-30",en:" ",pli:" ",has:"#np21n#np22n#np23n#np24n#np25n#np26n#np27n#np28n#np29n#np30n"},
+
+{id:"np1n",title:"布過十日",stem:"#np1|戒條",en:" ",pli:" ",zh:"1.非時超過十天存放額外的布",bkn_np:13
+,nd:" #nd_vsl;喬達磨塔廟時，規定比丘只能有三件衣服；#p_chabbaggiya;卻在入村落﹑住寺院﹑沐浴時，都穿著不同的三件衣服。"
+,fact:"1.對象：多餘的衣服。2.時間：除了作衣服和穿功德衣的時間外。3.方式：存放超過十天。"
+,nooff:"1.在十天內處理﹑分配﹑捐給僧團﹑遺失﹑損壞(*)﹑燒毀。2.失而復得。3.被好朋友們自行取走(*)。4.精神失常。"},
+
+
+{id:"np2n",title:"離衣",stem:"#np2|戒條",en:" ",pli:" ",zh:"2.離開三衣過夜",bkn_np:14
+,nd:" #nd_ap;，阿難尊者巡視僧房時，發現某些比丘把外套托給其他人保管，出外旅行。"
+,fact:"1.對象：比丘的三衣（下裙﹑上衣﹑外套）。2.方式：沒有攜帶。\n3.結果：過了一夜。"
+,nooff:"1.在天亮以前取回(*)﹑捐給僧團﹑遺失﹑損壞﹑燒毀。2.失而復得。3.好朋友自行取走。4.僧團允許。5.精神失常。"},
+
+{id:"np3n",title:"布過月",stem:"#np3|戒條",en:" ",pli:" ",zh:"3.非時超過一個月存放額外的布",bkn_np:15
+,nd:" #nd_ap;，某日巡行房舍，見到比丘們在不能存放衣服的時間得到一塊布，但不夠作一件衣服，便反覆擦磨，希望能使布變長。"
+,fact:"1.對象：多餘的布，但不夠作一件衣服。2.時間：作衣服和穿功德衣的時間外。3.方式：存放。4.結果：超過一個月。"
+,nooff:"1.在一個月內分配﹑捐給僧團﹑遺失﹑損壞﹑燒毀。2.失而復得。3.被好朋友自行取走。4.精神失常。"},
+
+{id:"np4n",title:"洗衣",stem:"#np4|戒條",en:" ",pli:" ",zh:"4.叫非親戚比丘尼整理穿過的衣服"
+,nd:" #nd_ap;，#p_udayi;送食物給一位比丘尼時，生起淫慾而洩出不淨，並命令比丘尼洗他的內衣。比丘尼以內衣上的精液置於自己的陰道，因而懷孕。"
+,fact:"1.對象：沒有親戚關係的比丘尼。2.方式：命令她洗﹑染﹑捶打自己穿過的衣服(*)。"
+,nooff:"1.有親戚關係的比丘尼洗時，沒有親戚關係的比丘尼幫忙。2.沒有親戚關係的比丘尼自動拿去洗。3.洗沒有穿過的衣服或其他生活用品(*)。4.由式叉摩那﹑沙彌尼洗。5.精神失常。"},
+
+
+{id:"np5n",title:"受衣",stem:"#np5|戒條",en:" ",pli:" ",zh:"5.接受非親戚比丘尼的衣服"
+,nd:" #nd_ap;，#p_udayi;強索蓮華色比丘尼的內衣，受其他比丘尼譏嫌。"
+,fact:"1.對象：沒有親戚關係的比丘尼。2.方式：接受衣服。"
+,nooff:"1.對方是有親戚關係的比丘尼。2.屬於交易的行為(*)。3.比丘認為比丘尼會樂意給予而取走。4.接受衣服以外的生活用品。5.接受式叉摩那或沙彌尼的衣服。6.精神失常。"},
+
+
+{id:"np6n",title:"乞衣",stem:"#np6|戒條",en:" ",pli:" ",zh:"6.向非親戚在家人乞衣",bkn_np:16
+,nd:" #nd_ap;，#p_upananda;向一位長者的兒子強索衣服，長者子因而只穿一件外套回家，其他人知道這件事後，就批評比丘。"
+,fact:"1.對象：沒有親戚關係的男女居士。2.方式：索求衣服。"
+,nooff:"1.衣服被搶走或損毀。2.向親戚索取衣服。3.居士自動供養比丘。4.為別人索求衣服。5.用自己的財物交換。6.精神失常。"},
+
+
+{id:"np7n",title:"索衣",stem:"#np7|戒條",en:" ",pli:" ",zh:"7.接受非親戚在家人的過多衣料",bkn_np:17
+,nd:" #nd_ap;，因為世尊規定「失去衣服的比丘，可以向沒有親戚關係的居士索求衣服」(*)，#p_chabbaggiya;便以某比丘衣服被搶為名義，到處向居士要衣服，受到居士批評。"
+,fact:"1.對象：沒有親戚關係的男、女居士。2.方式：索求衣服。3.結果：除了拿內衣和上衣外，還拿了其他的衣服。"
+,nooff:"1.拿走剩下的衣服。2.不是在衣服被搶或損毀的情況下獲得的。3.向親戚索取衣服。4.居士自動供養。5.精神失常。"},
+
+
+{id:"np8n",title:"索衣2",stem:"#np8|戒條",en:" ",pli:" ",zh:"8.指定非親戚在家人送某種衣料",bkn_np:18
+,nd:" #nd_ap;，#p_upananda;知道某居士準備一筆錢要買衣服送他，便到居士家中，指定居士買某一種衣服，居士埋怨比丘不知足。"
+,fact:"1.對象：沒有親戚關係的男或女居士。2.時間：對方將買衣服送他。3.方式：前往指定應買哪一種衣服。"
+,nooff:"1.向親戚指定應買何種衣服。2.居士自動邀請比丘指定。3.為別人指定。4.用自己的財物交換衣服。5.指定居士買便宜的衣服。6.精神失常。"},
+
+
+{id:"np9n",title:"索衣3",stem:"#np9|戒條",en:" ",pli:" ",zh:"9.指定非親戚在家人合送某種衣服",bkn_np:19
+,nd:" #nd_ap;，#p_upananda;知道某兩位居士各自準備一筆錢要買衣服送他，便到居士家中，叫他們把兩筆錢合起來合購某一件他指定的衣服，居士們因而埋怨比丘不知足。"
+,fact:"1.對象：沒有親戚關係的男或女居士。2.時間：對方將買衣服送他。3.方式：(1)建議將要買衣服給他的兩位居士，將兩筆錢合為一筆。(2)指定他們買某一種衣服。"
+,nooff:"1.向親戚指定應買何種衣服。2.居士自動邀請比丘指定買何種衣服。3.為別人指定。4.用自己的財物交換衣服。5.指定居士買便宜的衣服。6.精神失常。"},
+
+
+{id:"np10n",title:"索六次",stem:"#np10|戒條",en:" ",pli:" ",zh:"10.向保管衣資的待者索取衣料太急",bkn_np:20
+,nd:" #nd_ap;，有一位大臣派人送衣服的等價物給#p_upananda;。優婆難陀告訴送來的人，應該把等價物交給某位居士，再由這位居士去買衣服。後來優婆難陀需要衣服，向管等價物的居士要衣服，居士急著要去參加市民的集會，希望比丘明天再來拿，優婆難陀不肯，執意要居士去買衣服，使得居士錯過了集會時間而被罰錢。"
+,fact:"1.對象：負責為比丘管等價物﹑買衣服的居士。2.要求衣服時，(1)催討超過三次。(2)默立超過六次。"
+,nooff:"1.催促三次或三次以下。2.默立六次或六次以下。3.負責買衣服的居士自動給予比丘衣服。4.由施主催促而拿給比丘。5.精神失常。"},
+
+
+{id:"np11n",title:"蠶絲",stem:"#np11|戒條",en:" ",pli:" ",zh:"11.做混著蠶絲的毯子"
+,nd:" #nd_alv;，#p_chabbaggiya;向養蠶的居士索取蠶絲作被褥，居士認為自己本身福薄才從事這種殺生的行業，比丘卻還向他們要蠶絲。"
+,fact:"1.對象：被褥。2.方式：加入了蠶絲。"
+,nooff:"1.做傘蓋(*)﹑地墊(*)﹑帷幕﹑椅墊(*)﹑蒲團(*)。2.精神不正常。"},
+
+{id:"np12n",title:"黑毯",stem:"#np12|戒條",en:" ",pli:" ",zh:"12.做純黑羊毛的毯子"
+,nd:" #nd_vsl;大林重閣講堂時，#p_chabbaggiya;用純黑色的羊毛作被褥，受到居士批評。"
+,fact:"1.對象：被褥。2.方式：用純黑色羊毛製作。"
+,nooff:"1.做傘蓋﹑地墊﹑帷幕﹑椅墊﹑蒲團。2.精神失常。"},
+
+
+{id:"np13n",title:"毯料",stem:"#np13|戒條",en:" ",pli:" ",zh:"13.做毯子的材料比例不恰當"
+,nd:" #nd_ap;，#p_chabbaggiya;用純黑色的羊毛做被褥，只在邊緣加上白色羊毛，表示沒有犯「以純黑色羊毛做被褥」戒。"
+,fact:"1.對象：被褥。2.方式：違反「純黑色羊毛佔四分之二，白色和雜色羊羊毛各佔四分之一」的比例。"
+,nooff:"1.按照比例，各加入四分之一(*)的白色羊毛和雜色羊毛。2.加入四分之一以上的白色和雜色羊毛4。3.用白色和雜色羊毛製作。4.做傘蓋﹑地墊 ﹑帷幕﹑椅墊 ﹑蒲團。5.比丘精神失常。"},
+
+{id:"np14n",title:"新毯",stem:"#np14|戒條",en:" ",pli:" ",zh:"14.六年內做新毯子"
+,nd:" #nd_ap;，比丘每年都做新的被褥，頻頻向居士索取羊毛，造成他們的負擔。"
+,fact:"1.對象：被褥。2.時間：做了新被褥後。3.方式：使用未滿六年便做新的。"
+,nooff:"1.使用滿六年或六年以上。2.替別人做的。3.別人做好送來的3。4.做傘蓋﹑地墊 ﹑帷幕﹑椅墊 ﹑蒲團。5.僧團同意。6.比丘精神失常。"},
+
+{id:"np15n",title:"新墊",stem:"#np15|戒條",en:" ",pli:" ",zh:"15.新坐墊不加上舊坐墊的布"
+,nd:" #nd_ap;，巡視比丘寮房，見到舊坐墊四處丟棄，因此制戒(*)。"
+,fact:"1.時間：製作新坐墊。2.方式：不取舊坐墊的邊縫製在新坐墊上。"
+,nooff:"1.從舊坐墊的邊取下一佛指距做新坐墊。2.舊坐墊殘破不堪時，只取一小部分或是不取。3.別人做好送來的。4.做傘蓋﹑地墊﹑帷幕﹑椅墊﹑蒲團。5.僧團同意。6.比丘精神失常。"},
+
+{id:"np16n",title:"受羊毛",stem:"#np16|戒條",en:" ",pli:" ",zh:"16.旅途上接受羊毛後走太遠"
+,nd:" #nd_ap;，比丘在前往舍衛城途中得到羊毛，便帶著羊毛走路，被人譏笑是在賣羊毛。"
+,fact:"1.對象：旅途中獲得的羊毛。2.方式：走路時帶著。3.結果：超過三由旬路。"
+,nooff:"1.帶著羊毛走三由旬或三由旬以內。2.走了三由旬後，又折回(*)。3.走了三由旬後，定居下來，再到其他地方去(*) 。4.失而復得(*)。5.請別人幫忙拿。6.比丘精神失常。"},
+
+{id:"np17n",title:"羊毛",stem:"#np17|戒條",en:" ",pli:" ",zh:"17.叫非親戚比丘尼整理羊毛"
+,nd:" #nd_ng;，#p_chabbaggiya;命比丘尼洗羊毛，導致比丘尼們無暇精進於道業。"
+,fact:"1.對象：沒有親戚關係的比丘尼。2.方式：命令她們(1)洗﹑(2)染﹑(3)梳理羊毛(*)。"
+,nooff:"1.有親戚關係的比丘尼洗時，沒有親戚關係的比丘尼幫忙。2.沒有親戚關係的比丘尼自行拿去洗。3.洗沒有用過的羊毛(*)。4.由式叉摩那﹑沙彌尼洗。5.比丘精神失常。"},
+
+
+{id:"np18n",title:"拿錢",stem:"#np18|戒條",en:" ",pli:" ",zh:"18.接受金銀",bkn_np:21
+,nd:" #nd_kld;，#p_upananda;到施主家乞食，居士預留的肉被兒子吃了，所以用錢代替肉供養比丘；優婆難陀接受了錢後，居士批評比丘也像在家眾一樣接受金錢。"
+,fact:"1.對象：金錢(*)。2.方式：(1)接受﹑(2)請別人代收﹑存放。"
+,nooff:"1.在寺院﹑居士家接受或由別人代收金錢後，不當作是自己的，只是加以保管(*)。2.比丘精神失常。"},
+
+{id:"np19n",title:"貨幣",stem:"#np19|戒條",en:" ",pli:" ",zh:"19.買賣金銀",bkn_np:22
+,nd:" #nd_ap;，#p_chabbaggiya;從事各種貴重金屬及貨幣的交易，居士們批評這是在家人的行為，並不是出家人應該做的。"
+,fact:"1.對象：貴重金屬(*)。2.方式：買賣交易。"
+,nooff:"1.比丘精神失常。"},
+
+{id:"np20n",title:"買賣",stem:"#np20|戒條",en:" ",pli:" ",zh:"20.買賣物品",bkn_np:23
+,nd:" #nd_ap;，#p_upananda;和一位遊學的人交換外衣，後來遊學者後悔交換，想要換回來，優婆難陀不肯，遊學者大為不滿。"
+,fact:"1.對象：物品(*)。2.方式：買賣、交易。"
+,nooff:"1.問了價格後，命執事人(*)去交換。2.比丘精神失常。"},
+
+{id:"np21n",title:"缽十日",stem:"#np21|戒條",en:" ",pli:" ",zh:"21.存放額外的缽超過十天",bkn_np:22
+,nd:" #nd_ng;，#p_chabbaggiya;命比丘尼洗羊毛，導致比丘尼們無暇精進於道業。"
+,fact:"1.對象：沒有親戚關係的比丘尼。2.方式：命令她們(1)洗﹑(2)染﹑(3)梳理羊毛(*)。"
+,nooff:"1.有親戚關係的比丘尼洗時，沒有親戚關係的比丘尼幫忙。2.沒有親戚關係的比丘尼自行拿去洗。3.洗沒有用過的羊毛(*)。4.由式叉摩那﹑沙彌尼洗。5.比丘精神失常。"},
+
+{id:"np22n",title:"新缽",stem:"#np22|戒條",en:" ",pli:" ",zh:"22.以未滿五綴的缽換新缽",bkn_np:24
+,nd:" #nd_ng;，一位陶匠發心供養缽給比丘，比丘們就頻頻向他索缽，導致他生活困苦。"
+,fact:"1.對象：自己的缽。2.方式：補綴不滿五次就換用新的。"
+,nooff:"1.自己的缽遺失﹑毀壞時。2.向親戚拿。3.施主主動供養。4.替別人索取。5.用自己的東西交換。6.比丘精神失常。"},
+
+{id:"np23n",title:"七日藥",stem:"#np23|戒條",en:" ",pli:" ",zh:"23.七日藥(儲存最多儲存七天) ",bkn_np:25
+,nd:" #nd_ap;，畢陵婆伽蹉比丘在頻婆娑羅王面前示現神通，受到眾人的敬仰，供養他許多奶油、鮮油、油、蜂蜜、糖漿等藥物，畢陵婆伽蹉比丘將之分送其他比丘。比丘們便囤積這些藥物，不僅使得藥物互相纏黏，招致老鼠食用，而且被批評為生活驕奢。"
+,fact:"1.對象：酥油、鮮奶油、油、蜂蜜、糖漿。2.方式：生病時服用此五種藥物。3.結果：囤積超過七天。"
+,nooff:"1.在七天內處理﹑分配﹑捐給僧團﹑遺失﹑損壞。2.失而復得。3.好朋友自行取走。4.送給沙彌(*)。5.送給別人(*)。6.比丘精神失常。"},
+
+{id:"np24n",title:"雨衣",stem:"#np24|戒條",en:" ",pli:" ",zh:"24.提前乞求和使用雨衣"
+,nd:" #nd_ap;，#p_chabbaggiya;提由準備、製作雨浴衣，並且提早使用。使得雨浴衣壞了而無法穿著，因而不穿雨浴而裸形雨浴。"
+,fact:"1.對象：雨浴衣。2.方式：提早準備、製作或使用。"
+,nooff:"1.晚於規定的時間準備、製作或使用雨浴衣。2.在雨季時，把雨浴衣穿破了(*)。3.洗好並存放，在合適的時間使用。4.衣服被搶走、遺失。5.意外事故。6.比丘精神失常。"},
+
+{id:"np25n",title:"奪衣",stem:"#np25|戒條",en:" ",pli:" ",zh:"25.送衣服後奪回",bkn_np:26
+,nd:" #nd_ap;，#p_upananda;邀某比丘一起外出，並送他一件衣服。後來這位比丘因事不能與優婆難陀一起出遊，優婆難陀便生氣地要回原先送他的衣服。"
+,fact:"1.對象：衣服。2.方式：送給別人後，又要回去。3.動機：憤怒不悅。"
+,nooff:"1.對方自動送還。2.認為對方會樂意給予而取走。3.比丘精神失常。"},
+
+
+{id:"np26n",title:"絲織",stem:"#np26|戒條",en:" ",pli:" ",zh:"26.叫織工織絲成布",bkn_np:27
+,nd:" #nd_ap;，#p_chabbaggiya;向居士索取絲線，不斷地請織工織布，受到別人批評。"
+,fact:"1.對象：織工。2.方式：索取絲線，請織工織布。"
+,nooff:"1.縫製衣服的鈕扣﹑腰帶﹑肩紐(*)。2.縫製缽袋﹑濾水囊。3.請親戚織布。4.織工自願織布。5.為別人請織工織布。6.用自己的財物交換。7.比丘精神失常。"},
+
+{id:"np27n",title:"令織",stem:"#np27|戒條",en:" ",pli:" ",zh:"27.未受請而命令織工如何織布",bkn_np:28
+,nd:" #nd_ap;，#p_upananda;知道某居士將請織工織布送他，便到織工那裡，要求他將布織得更好。居士知道後，責怪比丘不知足。"
+,fact:"1.時間：居士請織工織布給比丘時。2.對象：織工。3.方式：要求他織得更好。"
+,nooff:"1.請織工織布的是比丘的親戚。2.居士自動請織工織更好的布。3.為別人而請織工織更好的布。4.用自己的財物交換。5.請織工織較差的布。6.比丘精神失常。"},
+
+{id:"np28n",title:"存衣",stem:"#np28|戒條",en:" ",pli:" ",zh:"28.存放急施衣超過做衣服的時間",bkn_np:29
+,nd:" #nd_ap;，一位大臣要到遠地去，無法等到安居結束再供養比丘衣服，所以佛允許比丘接受特殊情況的衣服。比丘們接受這些衣服後便收藏起來，超過了可以存放衣服的時間。"
+,fact:"1.對象：特別允許接受的衣服。2.方式：存放。3.結果：超過允許存放衣服的時間。"
+,nooff:"1.在七天內處理﹑分配﹑捐給僧團﹑遺失﹑損壞。2.失而復得。3.好朋友自行取走。4.比丘精神失常。"},
+
+{id:"np29n",title:"離衣",stem:"#np29|戒條",en:" ",pli:" ",zh:"29.有難離衣宿超過六夜"
+,nd:" #nd_ap;，比丘們雨安居後，由於八月賊會來搶奪居士供養的衣物，所以佛允許比丘把三衣的其中一件，寄放在居士家中。但是比丘們長期把衣服放在居士家，使得衣服損毀壞掉。"
+,fact:"1.對象：三衣。2.方式：存放在居士家。3.結果：超過六夜。"
+,nooff:"1.六夜或六夜以內沒有把三衣帶在身邊。2.六夜後，又回到存放衣服的村落去住。3.六夜之內取回、捐給僧團、遺失、損壞、燒毀。4.被搶走了。5.好朋友自行取走。6.僧團允許。7.比丘精神失常。"},
+
+{id:"np30n",title:"據己",stem:"#np30|戒條",en:" ",pli:" ",zh:"30.轉供養僧團的物品為己有",bkn_np:30
+,nd:" #nd_ap;，舍衛城有一群居士準備了衣服和食物，將要供養僧團，卻被#p_chabbaggiya;強行索去。"
+,fact:"1.對象：明知是要供養僧團的物品。2.方式：據為己有。"
+,nooff:"1.勸居士布施到可以受用這些物品、需要這些物品、帶來大利益及使心情平靜的地方。2.比丘精神失常。"},
+
+{id:"92pacittiya_n",zh:"九十二懺悔",en:" ",pli:"suddhapācittiyā",has:"#pc_g1n#pc_g2n#pc_g3n#pc_g4n#pc_g5n#pc_g6n#pc_g7n#pc_g8n#pc_g9n"},
+
+{id:"pc_g1n",zh:"pc1-10",en:" ",pli:" ",has:"#pc1n#pc2n#pc3n#pc4n#pc5n#pc6n#pc7n#pc8n#pc9n#pc10n"},
+{id:"pc_g2n",zh:"pc11-20",en:" ",pli:" ",has:"#pc11n#pc12n#pc13n#pc14n#pc15n#pc16n#pc17n#pc18n#pc19n#pc20n"},
+{id:"pc_g3n",zh:"pc21-30",en:" ",pli:" ",has:"#pc21n#pc22n#pc23n#pc24n#pc25n#pc26n#pc27n#pc28n#pc29n#pc30n"},
+{id:"pc_g4n",zh:"pc31-40",en:" ",pli:" ",has:"#pc31n#pc32n#pc33n#pc34n#pc35n#pc36n#pc37n#pc38n#pc39n#pc40n"},
+{id:"pc_g5n",zh:"pc41-50",en:" ",pli:" ",has:"#pc41n#pc42n#pc43n#pc44n#pc45n#pc46n#pc47n#pc48n#pc49n#pc50n"},
+{id:"pc_g6n",zh:"pc51-60",en:" ",pli:" ",has:"#pc51n#pc52n#pc53n#pc54n#pc55n#pc56n#pc57n#pc58n#pc59n#pc60n"},
+{id:"pc_g7n",zh:"pc61-70",en:" ",pli:" ",has:"#pc61n#pc62n#pc63n#pc64n#pc65n#pc66n#pc67n#pc68n#pc69n#pc70n"},
+{id:"pc_g8n",zh:"pc71-80",en:" ",pli:" ",has:"#pc71n#pc72n#pc73n#pc74n#pc75n#pc76n#pc77n#pc78n#pc79n#pc80n"},
+{id:"pc_g9n",zh:"pc81-92",en:" ",pli:" ",has:"#pc81n#pc82n#pc83n#pc84n#pc85n#pc86n#pc87n#pc88n#pc89n#pc90n#pc91n#pc92n"},
+
+{id:"pc1n",stem:"#pc1|戒條",en:" ",pli:" ",zh:"1.故意說謊",bkn_pc:97
+,nd:" #nd_ap;，訶陀伽比丘和外道辯論，把「是」說成「不是」，「不是」說成「是」，閃爍其詞，受到外道的批評。"
+,fact:"1.對象：人。2.方式：不實的言語。3.動機：欺騙。"
+,nooff:"1.開玩笑。2.口誤(*)。3.比丘精神失常。"},
+
+{id:"pc2n",stem:"#pc2|戒條",en:" ",pli:" ",zh:"2.辱罵",bkn_pc:98
+,nd:" #nd_ap;，#p_chabbaggiya;和其他比丘起爭執，便辱罵他們，從血統﹑家庭﹑行業乃至對方所說過的話都罵。"
+,fact:"1.對象：比丘。2.方式：辱罵。3.動機：侮辱(*)。"
+,nooff:"1.為了教導別人而說出罵人的語詞。2.比丘精神失常。"},
+
+{id:"pc3n",stem:"#pc3|戒條",en:" ",pli:" ",zh:"3.毀謗",bkn_pc:99
+,nd:" #nd_ap;，比丘們發生爭執，#p_chabbaggiya;分別在他們面前說對方的壞話，使得糾紛更為擴大。"
+,fact:"1.對象：比丘。2.方式：毀謗。3.動機(*)：(1)討好別人。(2)離間感情。"
+,nooff:"1.不是為了討好別人﹑離間感情。2.比丘精神失常。"},
+
+{id:"pc4n",stem:"#pc4|戒條",en:" ",pli:" ",zh:"4.帶領未受戒者朗誦經文",bkn_pc:100
+,nd:" #nd_ap;，比丘帶領優婆塞們一句一句地誦讀經文，導致優婆塞們不尊敬比丘。(*)"
+,fact:"1.對象：未受具足戒的人。2.方式：教他們一句一句地誦讀經文。"
+,nooff:"1.和未受具足戒的人一起誦經時，熟知經文者誦完後，其他人再誦。2.和未受具足戒的人一起複習時，熟知經文者先解說，其他人再誦。3.比丘精神失常。(*)"},
+
+{id:"pc5n",stem:"#pc5|戒條",en:" ",pli:" ",zh:"5.與未受戒者同宿",bkn_pc:101
+,nd:" #nd_alv;，一位新學比丘和信士在講堂內過夜，由於睡相不雅而受到信士批評。"
+,fact:"1.對象：未受具足戒的人。2.方式：同一房間過夜。"
+,nooff:"1.只住兩、三夜。2.不超過兩、三夜。3.住到第二夜後，在第三夜日出前離開(*)；再繼續住。4.住的地方有屋頂，但四壁無牆。5.住的地方四壁有牆，但沒有屋頂。6.住的地方屋頂和牆壁都不完整(*)。7.過夜的時候，未受具足戒的人躺著，比丘坐著。8.過夜的時候，未受具足戒的人坐著，比丘躺著。9.過夜的時候，未受具足戒的人和比丘都坐著。10.比丘精神失常。"},
+
+{id:"pc6n",stem:"#pc6|戒條",en:" ",pli:" ",zh:"6.和女人同宿",bkn_pc:102
+,nd:" #nd_ap;，阿那律比丘在拘薩羅的一位女居士家投宿，女居士欲染心生，要求與阿那律同房而宿，並企圖誘惑阿那律。"
+,fact:"1.對象：女人。2.方式：同一房間過夜。"
+,nooff:"1.住的地方有屋頂，但四壁無牆。2.住的地方四壁有牆，但沒有屋頂。3.住的地方屋頂和牆壁都不完整(*)。4.過夜的時候，女人躺著，比丘坐著。5.過夜的時候，女人坐著，比丘躺著。6.過夜的時候，女人和比丘都坐著。7.比丘精神失常。"},
+
+{id:"pc7n",stem:"#pc7|戒條",en:" ",pli:" ",zh:"7.對女人說法超過五至六句",bkn_pc:103
+,nd:" #nd_ap;，#p_udayi;在舍衛城乞食，分別和某家的婆婆﹑媳婦獨處說法，使得婆媳互相猜忌，並指責比丘不該對女人秘密說法。消息傳出後，其他比丘便批評優陀夷對女人說法。"
+,fact:"1.對象：女人。2.方式：說法。3.結果：超過五至六句。"
+,nooff:"1.對女人說法時，有辦別能力的男子也在場。2.只說五至六句。3.說五至六句以下。4.法師本來站著，後來又坐下說法。5.聽法的女人本來站著，後來又坐下3。6.對不同的女人說法而超過五至六句。7.回答問題時，超過五至六句4。8.對其他人說法時，女人在一旁聽。9.比丘精神失常。"},
+
+{id:"pc8n",stem:"#pc8|戒條",en:" ",pli:" ",zh:"8.實證得聖法而告訴未受戒者",bkn_pc:104
+,nd:" #nd_vsl;；跋耆一地鬧飢荒，生活艱苦，婆裘摩河邊的比丘們為了安穩度過雨安居，就把他們證得解脫及解脫知見的事告訴居士，以獲得利養。"
+,fact:"1.對象：未受具足戒的人。2.方式：說自己已有證得聖法。3.動機：獲得利養。4.結果：對方理解。"
+,nooff:"1.真的證得聖法，告訴已受具足戒的人。2.比丘精神失常。"},
+
+{id:"pc9n",stem:"#pc9|戒條",en:" ",pli:" ",zh:"9.將比丘犯的重罪告訴未受戒者",bkn_pc:105
+,nd:" #nd_ap;；#p_chabbaggiya;和優婆難陀不和，便把#p_upananda;僧殘一「#sd1;」的事，告訴優婆塞。"
+,fact:"1.對象：未受具足戒的人。2.方式：說出某比丘犯重罪(*)。"
+,nooff:"1.只說犯罪的內容，但沒有說出罪名。2.只說出罪名，但沒有說犯罪的內容。3.僧團同意(*)。4.比丘精神失常。"},
+
+{id:"pc10n",stem:"#pc10|戒條",en:" ",pli:" ",zh:"10.挖掘土地",bkn_pc:106
+,nd:" #nd_alv;，阿羅毗的比丘們為了建講堂，自己挖掘土地，又叫別人也挖掘土地。居士們批評比丘傷害生命。"
+,fact:"1.對象：土地。2.方式：自己或命人挖掘。"
+,nooff:"1.告訴別人：「就是這個」﹑「給我這個」﹑「送這個來」﹑「我要這個」﹑「要合乎規定來做」(*)。2.無意。3.不小心。4.比丘精神失常。"},
+
+{id:"pc11n",stem:"#pc11|戒條",en:" ",pli:" ",zh:"11.砍伐植物",bkn_pc:107
+,nd:" #nd_alv;，阿羅毗的比丘為了建講堂，自己砍伐植物，又叫別人也砍伐植物。居士們批評比丘傷害生命。"
+,fact:"1.對象：樹木。2.方式：自己或命人砍伐。"
+,nooff:"1.告訴別人：「就是這個」﹑「給我這個」﹑「送這個來」﹑「我要這個」﹑「要合乎規定來做」(*)。2.無意的。3.不小心的。4.比丘精神失常。"},
+
+{id:"pc12n",stem:"#pc12|戒條",en:" ",pli:" ",zh:"12.回答其它話題(顧左右而言他) ",bkn_pc:108
+,nd:" #nd_gst;，#p_channa;的行為違反僧團規定，但是在羯磨中被詢問時，卻頻頻找藉口而不願坦白承認，受到佛的呵責。"
+,fact:"1.對象：僧團。2.時間：羯磨時被詢問到所犯的過錯。3.方式：(1)找藉口。(2)故意使人生氣。4.動機：不坦白承認。"
+,nooff:"1.因為不明白問題而反問對方。2.認為如果說出來會引起僧團的爭吵﹑糾紛，所以沈默不說話。3.認為如果說出來會破壞僧團的和諧﹑引發爭論，所以沈默不說話。4.僧團羯磨時，(1)不是和合的僧團，(2)羯磨不合乎規定，(3)不適宜羯磨，所以沈默不說話。5.比丘精神失常。"},
+
+{id:"pc13n",stem:"#pc13|戒條",en:" ",pli:" ",zh:"13.譏嫌僧團職事",bkn_pc:109
+,nd:" #nd_kld;，慈﹑地兩比丘因為剛出家，分配到較不好的食物及房間，便責怪負責分配食物和房間的#p_dabba;。"
+,fact:"1.對象：比丘。2.方式：(1)責怪(*)。(2)批評。"
+,nooff:"1.所責怪或批評的比丘，是具有貪﹑瞋﹑痴﹑怖畏的人。2.比丘精神失常。"},
+
+{id:"pc14n",stem:"#pc14|戒條",en:" ",pli:" ",zh:"14.在空地曬坐臥具不收就離開",bkn_pc:110
+,nd:" #nd_ap;，比丘們在寒季6將臥具7設於太陽下；出門乞食時沒有收，也沒有委託別人代收，使得坐墊被雨淋濕。"
+,fact:"1.對象：僧團的床﹑椅﹑椅墊﹑坐墊。2.方式：在露天鋪置。3.結果：離開時沒有收，也沒有委託別人代收。"
+,nooff:"1.離開的時候有收起來。2.床﹑椅等物品在太陽下曝曬時離去(*)。3.遇到某些障礙﹑災害而無法趕回去收。4.精神失常。"},
+
+
+{id:"pc15n",stem:"#pc15|戒條",en:" ",pli:" ",zh:"15.在房內鋪臥具不收就離開",bkn_pc:111
+,nd:" #nd_ap;；#p_sattarasavaggiye;們出外時沒有收拾房間內的臥具，也沒有委託別人代收，便離開了。使得床墊被螞蟻咬壞。"
+,fact:"1.對象：臥具。2.地點：房間內。3.方式：鋪置。4.結果：離開時沒有收，也沒有委託別人代收。"
+,nooff:"1.離開的時候有收起來。2.有重要的事必須先走，事後再託人代收。3.遇到某些障礙﹑災害而無法趕回去收。4.比丘精神失常。"},
+
+{id:"pc16n",stem:"#pc16|戒條",en:" ",pli:" ",zh:"16.強行擠開先到僧房的比丘",bkn_pc:112
+,nd:" #nd_ap;，#p_chabbaggiya;先佔據(*)了好的床位，上座比丘將他們趕出去。#p_chabbaggiya;便擠進上座比丘的房中，鋪設臥具。"
+,fact:"1.對象：已有比丘住進去的僧房。2.方式：進入其中鋪置臥具。"
+,nooff:"1.由於冷﹑熱等痛苦而進入。2.由於災禍而進入。3.比丘精神失常。"},
+
+{id:"pc17n",stem:"#pc17|戒條",en:" ",pli:" ",zh:"17.趕人出房",bkn_pc:113
+,nd:" #nd_ap;，#p_chabbaggiya;進入#p_sattarasavaggiye;建的僧房，並將他們趕出去。"
+,fact:"1.對象：原先住在僧房中的比丘。2.方式：將他趕出去。3.動機：憤怒不悅。"
+,nooff:"1.將(1)犯戒者。(2)破壞僧團和合者。(3)行為不檢的徒弟（包括自己所剃度的徒弟和依止的徒弟）趕出去，並把他們的行李拿到僧房外。2.比丘精神失常。"},
+
+{id:"pc18n",stem:"#pc18|戒條",en:" ",pli:" ",zh:"18.閣樓(使用可拆卸的床椅) ",bkn_pc:114
+,nd:" #nd_ap;，某位住閣樓(*)的比丘，用力坐在可拆卸的床(*)時，床腳突然脫落，擊中樓下的比丘。"
+,fact:"1.對象：可拆卸的床（椅）。2.地點：閣樓。3.方式：坐或躺。"
+,nooff:"1.雖然使用，但不是在閣樓上。2.在常人的頭碰得到的房子，所搭建的閣樓上使用(*)。3.住樓下的比丘使用。4.閣樓上舖滿了木板，沒有空隙會掉東西下去。5.在可拆卸的床（椅）的腳上用橫木(*)固定。6.在閣樓上扶﹑靠可拆卸的床（椅）。7.比丘精神失常。"},
+
+{id:"pc19n",stem:"#pc19|戒條",en:" ",pli:" ",zh:"19.建大房子塗蓋超過兩三層",bkn_pc:115
+,nd:" #nd_gst;，信徒為#p_channa;蓋了一棟房子，闡陀比丘命人再三裝修屋頂，使得牆壁無法負荷而倒塌，壓壞了四周的農作物。"
+,fact:"1.地點：植物稀少處(*)。2.對象：大僧房的屋頂（除了門口、裝設門楣(*)、留置窗戶(*)的地方）。3.方式：蓋超過二至三層(*)。"
+,nooff:"1.不超過二至三層。2.山窟或洞穴中的房屋。3.為別人蓋超過二至三層。4.用自己的財物。5.比丘精神失常。"},
+
+{id:"pc20n",stem:"#pc20|戒條",en:" ",pli:" ",zh:"20.澆有生物的水到草上或地上",bkn_pc:116
+,nd:" #nd_alv;，阿羅毗的比丘蓋房子時，將有生物的水倒在草及上。"
+,fact:"1.對象：有生物的水(*)。2.方式：傾倒在草或土上(*)。"
+,nooff:"1.無意。2.不小心。3.不知道是有生物的水。4.比丘精神失常。"},
+
+{id:"pc21n",stem:"#pc21|戒條",en:" ",pli:" ",zh:"21.未經選派擅自教誡比丘尼"
+,nd:" #nd_ap;，#p_chabbaggiya;見上座比丘教導比丘尼，得到種種供養，便自行前去教導比丘尼，但是大多在閒話家常，甚少說法。"
+,fact:"1.對象：比丘尼。2.方式：未經指派而教導(*)。"
+,nooff:"1.和比丘尼一起讀誦經文。2.回答比丘尼問題。3.教導其他人時，比丘尼在一旁聽。4.教導式叉摩那﹑沙彌尼。5.精神失常。"},
+
+
+{id:"pc22n",stem:"#pc22|戒條",en:" ",pli:" ",zh:"22.教誡比丘尼至日落"
+,nd:" #nd_ap;，周利槃陀伽教導比丘尼，直到太陽下山才下課，這時候城門已關，周利槃陀伽無法回到寺院住宿，隔日才入城。旁人見狀以為比丘尼和比丘共宿。"
+,fact:"1.對象：比丘尼。2.方式：經指派而去教導。3.結果：天黑才結束。"
+,nooff:"1.和比丘尼一起讀誦經文。2.回答比丘尼問題。3.教導其他人時，比丘尼在一旁聽。4.教導式叉摩那﹑沙彌尼。5.精神失常。"},
+
+
+{id:"pc23n",stem:"#pc23|戒條",en:" ",pli:" ",zh:"23.至無病比丘尼的住處教誡"
+,nd:" #nd_ng;，#p_chabbaggiya;到比丘尼的寢室說法。比丘尼將此事告訴世尊。"
+,fact:"1.對象：比丘尼。2.地點：比丘尼的寢室(*)。3.方式：說法。"
+,nooff:"1.比丘尼生病。2.和比丘尼一起讀誦經文。3.回答比丘尼問題。4.教導其他人時，比丘尼在一旁聽。5.教導式叉摩那﹑沙彌尼。6.精神失常。"},
+
+
+{id:"pc24n",stem:"#pc24|戒條",en:" ",pli:" ",zh:"24.毀謗教誡比丘尼的比丘"
+,nd:" #nd_ap;，上座比丘教導比丘尼而獲得了衣服﹑食物等供養，#p_chabbaggiya;便說：上座比丘是為了名利而去教導比丘尼。"
+,fact:"1.對象：教導比丘尼的比丘。2.方式：說比丘為了利益(*)而教導比丘尼。"
+,nooff:"1.比丘真的是為了利益而教導比丘尼。2.精神失常。"},
+
+
+{id:"pc25n",stem:"#pc25|戒條",en:" ",pli:" ",zh:"25.送衣服給非親戚比丘尼"
+,nd:" #nd_ap;，某一比丘在乞食時認識了一位比丘尼。僧眾分配布時，比丘把自己的衣服送給所認識的比丘尼，本身則衣衫襤褸。"
+,fact:"1.對象：沒有親戚關係的比丘尼。2.方式：送布。"
+,nooff:"1.對方是有親戚關係的比丘尼。2.屬於交易的行為。3.比丘認為比丘尼會樂意給予而取走。4.接受布以外的生活用品。5.接受式叉摩那或沙彌尼的衣服。6.精神失常。"},
+
+
+{id:"pc26n",stem:"#pc26|戒條",en:" ",pli:" ",zh:"26.為非親戚比丘尼縫製衣服"
+,nd:" #nd_ap;，某比丘尼請求#p_udayi;為她縫製衣服，優陀夷作好衣服後，染上鮮艷的顏色，並畫上男女交合的圖樣。"
+,fact:"1.對象：沒有親戚關係的比丘尼。2.方式：縫製或命人縫製衣服。"
+,nooff:"1.為(1)有親戚關係的比丘尼。(2)式叉摩那。(3)沙彌尼。縫製衣服。2.縫製衣服以外的其他物品。3.精神失常。"},
+
+
+{id:"pc27n",stem:"#pc27|戒條",en:" ",pli:" ",zh:"27.與比丘尼約定同行"
+,nd:" #nd_ap;，#p_chabbaggiya;約比丘尼結伴同行(*)，居士知道後批評說：「我們和女孩子一起散步，比丘也和比丘尼結伴同行」。"
+,fact:"1.對象：比丘尼。2.方式：約定結伴同行。"
+,nooff:"1.覺得路途上可能有恐怖﹑危險的事會發生。2.不期而遇。3.比丘尼約比丘結伴同行，而不是比丘約比丘尼。4.雖然約了比丘尼同行，但沒有依約前往。5.戰亂。6.精神失常。"},
+
+
+{id:"pc28n",stem:"#pc28|戒條",en:" ",pli:" ",zh:"28.約比丘尼同船渡河"
+,nd:" #nd_ap;，#p_chabbaggiya;約比丘尼一起搭船，居士知道後批評說：「我們約女孩子乘船泛江，比丘也和比丘尼一起搭船」。"
+,fact:"1.對象：比丘尼。2.方式：約定一起搭船。"
+,nooff:"1.橫渡河面(*)。2.不期而遇。3.比丘尼約比丘一起搭船，而不是比丘約比丘尼。4.雖然約了比丘尼同行，但沒有依約前往。5.戰亂。6.精神失常。"},
+
+
+{id:"pc29n",stem:"#pc29|戒條",en:" ",pli:" ",zh:"29.吃比丘尼聳恿居士供養的食物"
+,nd:" #nd_kld;，偷蘭難陀比丘尼到某居士家乞食，告訴長者說：舍利弗﹑目犍連等尊者比不上提婆達多，應該供養提婆達多等，而不要供養舍利弗等尊者。"
+,fact:"1.對象：比丘尼。2.方式：使她從中向居士周旋(*)。3.動機：取得居士的供養(*)。"
+,nooff:"1.居士已經事先準備好(*)。2.由式叉摩那﹑沙彌尼取得食物。3.五種軟食以外的食 物。4.精神失常。"},
+
+
+{id:"pc30n",stem:"#pc30|戒條",en:" ",pli:" ",zh:"30.單獨與比丘尼共坐"
+,nd:" #nd_ap; #p_udayi;和妻子一起出家後，仍時常見面，單獨地坐在旁人看不見﹑聽不見的隱密處(*)。"
+,fact:"1.對象：比丘尼。2.方式：單獨地坐在一起。3.地點：別人看不見﹑聽不見的地方。"
+,nooff:"1.具辨別能力的人在一旁陪伴(*)。2.站著而不是坐著。3.在別人看得見﹑聽得見的地方。4.並非故意找隱密處坐在一起，只是恰巧的(*)。5.精神失常。"},
+
+
+{id:"pc31n",stem:"#pc31|戒條",en:" ",pli:" ",zh:"31.無病在公共施食處吃超過一次",bkn_pc:117
+,nd:" #nd_ap;舍衛城附近有一個供養沙門的施食處，#p_chabbaggiya;每日皆前往該處取食，居士認為這個施食處是為諸沙門而設，並非專為佛教僧團服務。"
+,fact:"1.地點：同一個施食處(*)。2.方式：乞食。3.結果：超過一次。"
+,nooff:"1.生病無法離開施食處(*)。2.沒有在同一個施食處乞食。3.在往返的途中剛好都遇  到同一施食處(*)。4.雖然是同一個施食處但是：(1)施主前來邀請，或是(2)施主特地為某比丘而設的施食處，或是(3)可以無限量供應食物的施食處。5.五種軟食以外的食物。6.精神失常。"},
+
+{id:"pc32n",stem:"#pc32|戒條",en:" ",pli:" ",zh:"32.無故四人以上一起(受邀)吃飯",bkn_pc:118
+,nd:" #nd_kld;，提婆達多聚集比丘，集體至居士家接受食物。"
+,fact:"1.對象：居士。2.方式：四位或四位以上的比丘一起受供養。"
+,nooff:"1.二至三位比丘一起受供養。2.一起吃而不是一起受供養。3.五種特別的供養(*)：(1)固定的供養。(2)以餐券領取食物的供養。(3)每月十六日的月半供養。(4)每月一﹑八﹑十五﹑二十三日的齋戒日供養。(5)每月一﹑十六日的月初供養。4.五種軟食物以外的食物。5.精神失常。"},
+
+{id:"pc33n",stem:"#pc33|戒條",en:" ",pli:" ",zh:"33.無故放棄先前的邀請而食用另一餐"
+,nd:" #nd_vsl;的大林重閣講堂時，有一位窮僕邀請比丘們接受食物的供養，比丘們聽說窮僕將供養他們果汁，在接受供養前，仍去乞食。但是其他的居士聽說窮僕將供養佛陀及比丘們，便送來許多食物贊助窮僕，但比丘們已經吃過了，無法再吃。"
+,fact:"1.對象：居士。2.方式：連續接受供養(*)。"
+,nooff:"1.生病﹑接受衣服﹑作衣服等原因。2.將食物分配給其他比丘(*)。3.接受二至三位  居士供養，在一位居士家用餐。4.接受全村的供養，在某一個地方用餐。5.受邀請的時候，告訴居士說：「我已經有食物了」(*)。6.五種特別的供養：(1)固定的供養。(2)以餐券領取食物的供養。(3)每月十六日的月半供養。(4)每月一﹑八﹑十五﹑二十三日的齋戒日供養。(5)每月一﹑十六日的月初供養。7.精神失常。"},
+
+
+{id:"pc34n",stem:"#pc34|戒條",en:" ",pli:" ",zh:"34.接受糕餅過限",bkn_pc:119
+,nd:" #nd_ap;女居士迦若出嫁後回家探望母親，後來迦若的丈夫催促她回去，母親便做了餅要讓她帶走，但比丘接二連三地來乞食，把準備好的餅都吃光了。迦若為了等母親做餅，遲遲未歸，丈夫另結新歡。"
+,fact:"1.對象：居士。2.方式：接受煎餅或麥餅(*)的供養。3.結果：超過二至三缽。"
+,nooff:"1.拿二至三缽或二至三缽以下。2.所拿的餅不是準備送人或作旅行資糧用的。3.所拿的餅是準備送人或作旅行資糧剩下的。4.旅行的居士已經到達村落，才送餅給比丘(*)。5.居士自動請比丘任意拿餅。6.有親戚關係的居士。7.替別人拿的。8.用自己的財物交換。9.精神失常。"},
+
+
+{id:"pc35n",stem:"#pc35|戒條",en:" ",pli:" ",zh:"35.吃飽後又吃非餘比丘剩餘的食物",bkn_pc:31
+,nd:" #nd_ap;有一位婆羅門供養比丘，比丘們吃完後又到別的居士家乞食，婆羅門知道後，批評比丘。(*)"
+,fact:"1.對象：居士。2.時間：接受供養後。3.方式：又在其他地方吃東西。"
+,nooff:"1.吃別人分配的食物。2.說「等這些食物分配給我後，我才吃」。3.替別人拿。4.病人吃剩的食物。5.非時藥﹑七日藥﹑盡形壽藥(*)。6.有其他的原因。7.精神失常。"},
+
+
+{id:"pc36n",stem:"#pc36|戒條",en:" ",pli:" ",zh:"36.聳恿比丘犯戒吃東西以期攻詰"
+,nd:" #nd_ap;甲比丘因為受乙比丘的勸誡，懷恨在心；待乙比丘吃飽後，又聳恿他再吃，引誘犯罪。"
+,fact:"1.對象：已經吃飽(*)的比丘。2.方式：聳恿他再吃東西。3.動機：引誘犯罪。4.結果：對方吃下去。"
+,nooff:"1.拿別人分配的食物(*)。2.等到食物分配後，才拿給他吃。3.拿給他後，請他送給  其他需要食物的比丘。4.給他病人吃剩的食物。5.非時藥﹑七日藥﹑盡形壽藥。6.有其他的原因。7.精神失常。"},
+
+
+{id:"pc37n",stem:"#pc37|戒條",en:" ",pli:" ",zh:"37.過午食",bkn_pc:120
+,nd:" #nd_kld;，#p_sattarasavaggiye;過午吃東西。"
+,fact:"1.對象：食物。2.方式：吃。3.時間：中午過後。"
+,nooff:"1.因為生病而吃非時藥﹑七日藥或盡形壽藥。2.精神失常。"},
+
+
+{id:"pc38n",stem:"#pc38|戒條",en:" ",pli:" ",zh:"38.食用儲存的食物",bkn_pc:121
+,nd:" #nd_ap;，毗拉陀施沙比丘將乞得的飯曬乾後，儲存起來，要吃的時候再用水泡軟；因此有很多天沒有出去乞食。"
+,fact:"1.對象：儲存的食物。2.方式：吃。"
+,nooff:"1.因為生病而吃儲存的非時藥﹑七日藥或盡形壽藥。2.精神失常。"},
+
+
+{id:"pc39n",stem:"#pc39|戒條",en:" ",pli:" ",zh:"39.無病而為自己乞求營養食品"
+,nd:" #nd_ap;，#p_chabbaggiya;為自己乞求營養食品(酥油、奶油﹑蜂蜜﹑糖漿﹑魚﹑肉﹑乳(*)﹑酪)。"
+,fact:"1.對象：營養食品。2.方式：乞求。3.動機：為自己。"
+,nooff:"1.生病。2.生病時所乞求的營養食品，在沒有生病的時候吃。3.吃病人吃剩的營養食品。4.向親戚乞求。5.居士主動供養。6.替別人乞求。7.用自己的財物交換。8.精神失常。"},
+
+
+{id:"pc40n",stem:"#pc40|戒條",en:" ",pli:" ",zh:"40.不與而食",bkn_pc:122
+,nd:" #nd_vsl;大林重閣講堂時，有一位比丘行頭陀行，不接受居士給予的食物，卻去吃人民祭祖先的供物，受到居士批評。"
+,fact:"1.對象：不是要給他吃的食物(*)。2.方式：取走。"
+,nooff:"1.取走水和齒木(*)。2.被蛇咬時，可以自行取糞﹑尿﹑灰﹑黏土治療(*)。3.精神失常。"},
+
+
+{id:"pc41n",stem:"#pc41|戒條",en:" ",pli:" ",zh:"41.親手拿食物給外道",bkn_pc:46
+,nd:" #nd_vsl;的大林重閣講堂時，僧團有很多食物，世尊命阿難尊者，比丘們在發放食物時，外道也來領取，但是卻毀謗僧團。信徒便建議佛陀不要將食物給予外道。"
+,fact:"1.對象：裸形者﹑男女遍行者(*)。2.方式：親自送食物給他們。"
+,nooff:"1.託別人送食物給外道。2.放在外道的附近，不是親手交給他們。3.送外傷藥。4.比丘精神失常。"},
+
+{id:"pc42n",stem:"#pc42|戒條",en:" ",pli:" ",zh:"42.托缽途中趕走同伴",bkn_pc:123
+,nd:" #nd_ap;，#p_upananda;邀室友一同去乞食，尚未獲得食物時，跋難陀比丘就趕室友先回去，這位比丘因為沒有取得食物而挨餓。"
+,fact:"1.對象：同行的比丘。2.方式：遣他們先走(*)。"
+,nooff:"1.二個人不方便走在一起時。2.為了防止同伴看了貴重的財物時，會起貪心。3.為了防止同伴看到女人，會起瞋心。4.替病人﹑管理員﹑守門人(*)。5.並非想作違法的事，而是有其他的事要辦。6.比丘精神失常。"},
+
+{id:"pc43n",stem:"#pc43|戒條",en:" ",pli:" ",zh:"43.擅入懷有情欲的人家",bkn_pc:124
+,nd:" #nd_ap;，#p_upananda;到一對夫婦家拜訪，丈夫對妻子生起欲心，暗示跋難陀離去，但妻子請比丘不要走；丈夫便向其他比丘抱怨。"
+,fact:"1.對象：情欲外顯(*)的居士。2.方式：強行坐在他們的家中。"
+,nooff:"1.坐在大房子外投石不及的遠處。2.坐在小房子的門檻外。3.有其他比丘陪同。4.夫婦兩人已經離欲﹑斷煩惱。5.不是坐在臥室。6.比丘精神失常。"},
+
+{id:"pc44n",stem:"#pc44|戒條",en:" ",pli:" ",zh:"44.單獨與女人坐在隱蔽處",bkn_pc:125
+,nd:" #nd_ap;，#p_upananda;到一對夫婦家拜訪，和女主人坐在隱密處，丈夫見到後非常不高興。"
+,fact:"1.對象：女人。2.方式：秘密地坐在一起。3.地點：隱蔽坐處。"
+,nooff:"1.具辨別能力的男子陪伴。2.站著而不是坐著。3.在別人看得見﹑聽得見的地方。4.並非故意找隱密處坐在一起，只是恰巧的(*)。5.比丘精神失常。"},
+
+{id:"pc45n",stem:"#pc45|戒條",en:" ",pli:" ",zh:"45.單獨與女人共坐",bkn_pc:126
+,nd:" #nd_ap;，#p_upananda;到一對夫婦家拜訪，單獨和女主人秘密地坐在一起，丈夫見到後非常不高興。"
+,fact:"1.對象：女人。2.方式：單獨地坐在一起。"
+,nooff:"1.具辨別能力的男子陪伴。2.站著而不是坐著。3.在別人看得見﹑聽得見的地方。4.並非故意找隱密處坐在一起，只是恰巧的。5.比丘精神失常。"},
+
+{id:"pc46n",stem:"#pc46|戒條",en:" ",pli:" ",zh:"46.接受供養前後拜訪其他居士",bkn_pc:11127
+,nd:" #nd_kld;，#p_upananda;和其他比丘受邀到某居士家用餐，但跋難陀比丘在用餐前拜訪其他居士，使得比丘們必須等他回來後，才能開始吃。"
+,fact:"1.時間：受居士供養食物的前後。2.方式：拜訪其他居士。3.結果：使其他比丘等他回(*)來一起用餐。"
+,nooff:"1.接受衣服的供養﹑作衣服。2.事先已經告訴其他受邀的比丘。3.沒有其他比丘在場。4.前往受供養的途中，順便去其他居士家。5.到居士的鄰居家。6.在半路上，無法告知其他比丘。7.到 (1)尼院 (2)外道住處 (3)供養食物的居士家中。8.回到住處(*)。9.意外事故。10.比丘精神失常。"},
+
+{id:"pc47n",stem:"#pc47|戒條",en:" ",pli:" ",zh:"47.接受超過四個月的藥資具",bkn_pc:128
+,nd:" #nd_ng;，釋迦族的摩訶男自願供養僧團四個月的藥(*)。#p_chabbaggiya;因為曾受過摩訶男的指責，便思報復，前往摩訶男家，要求立即供養他們酥油。"
+,fact:"1.對象：居士。2.時間：供養必須品的四個月。3.方式：提出額外的要求(*)。"
+,nooff:"1.乞討所供養的物品。2.在供養必須品的時間內乞討。3.告訴居士說：「雖然你供養這些，但是我們需要某某物品。」(*)4.告訴居士說：「雖然你在前幾天供養我們，但是現在我們又需要供養。」5.向親戚要求。6.居士自動來邀請的。7.為別人要求。8.用自己的財物交換。9.比丘精神失常。"},
+
+{id:"pc48n",stem:"#pc48|戒條",en:" ",pli:" ",zh:"48.往觀出征的軍隊",bkn_pc:129
+,nd:" #nd_ap;，拘薩羅的波斯匿王出征，#p_chabbaggiya;前去觀看出征的隊，士兵大為不滿。"
+,fact:"1.對象：出征的軍隊。2.方式：前去觀看。"
+,nooff:"1.站在寺院裡面看。2.軍隊經過比丘的住處，而不是比丘自動前去觀看。3.在路上和軍隊相遇。4.其他特殊原因或突發的情況。5.比丘精神失常。"},
+
+{id:"pc49n",stem:"#pc49|戒條",en:" ",pli:" ",zh:"49.有因住軍中但超過三夜",bkn_pc:130
+,nd:" #nd_ap;，#p_chabbaggiya;因故在軍隊留宿多夜，受士兵批評。"
+,fact:"1.地點：軍隊。2.方式：留宿。3.結果：超過二至三夜。"
+,nooff:"1.住三夜。2.住不到三夜。3.住到第二夜後離開，然後再住進來。4.因為生病必須留下來。5.為了照顧病人而留下來。6.外面有敵軍包圍，無法離開。7.有其他障礙或意外事故無法離開。8.比丘精神失常。"},
+
+{id:"pc50n",stem:"#pc50|戒條",en:" ",pli:" ",zh:"50.有因住軍中而往觀軍隊演習",bkn_pc:131
+,nd:" #nd_ap;，#p_chabbaggiya;留宿在軍中，並前往觀看軍隊演習﹑操練﹑集合﹑檢閱(*)，其中一位比丘不小心被箭射中，受到嘲笑。"
+,fact:"1.地點：軍隊。2.時間：留宿在軍中的二至三夜。3.方式：前去觀看演習﹑集合﹑布署﹑校閱。"
+,nooff:"1.站在寺院裡面看。2.軍隊在比丘的住處附近演習。3.在路上碰巧遇見軍隊演習。4.其他特殊原因或突發的情況。5.比丘精神失常。"},
+
+{id:"pc51n",stem:"#pc51|戒條",en:" ",pli:" ",zh:"51.飲酒",bkn_pc:132
+,nd:" #nd_ksb;，沙伽陀比丘降伏了毒龍，民眾為了答謝他，便準備了沙伽陀比丘最喜愛的酒來招待他，沙伽陀比丘喝得酒醉倒地。"
+,fact:"1.對象：穀物酒或水果酒(*)。2.方式：飲用。"
+,nooff:"1.飲用含有酒的顏色﹑氣味﹑味道的飲料。2.飲用以酒調味的湯﹑肉﹑油。3.飲用菴摩羅果2汁。4.飲用含酒精的飲料。5.比丘精神失常。"},
+
+{id:"pc52n",stem:"#pc52|戒條",en:" ",pli:" ",zh:"52.對人搔癢",bkn_pc:133
+,nd:" #nd_ap;，#p_chabbaggiya;對#p_sattarasavaggiye;搔癢(*)，其中一位比丘笑得窒息而死。"
+,fact:"1.對象：人。2.方式：搔癢。"
+,nooff:"1.有事要叫對方時碰到，並非故意要讓他笑。2.比丘精神失常。"},
+
+{id:"pc53n",stem:"#pc53|戒條",en:" ",pli:" ",zh:"53.在水中嬉戲",bkn_pc:134
+,nd:" #nd_ap;，#p_sattarasavaggiye;在阿致羅筏底河中嬉戲(*)，波斯匿王看見後，便取笑摩利夫人說：「妳供養的比丘正在水中玩耍。」摩利夫人將此事告訴佛陀。"
+,fact:"1.地點：水中。2.方式：嬉戲。"
+,nooff:"1.不想玩水，而是有事情必須進入水中（浮﹑沈﹑游泳）。2.渡河到對岸。3.意外事故。4.比丘精神失常。"},
+
+{id:"pc54n",stem:"#pc54|戒條",en:" ",pli:" ",zh:"54.受教時不恭敬",bkn_pc:135
+,nd:" #nd_gst;，#p_channa;行為違反僧團的規定，比丘們規勸他時，闡陀又顯出不尊敬的態度(*)。"
+,fact:"1.對象：人或法。2.方式：不尊敬。"
+,nooff:"1.說：「我們老師所教的有些問題。」2.比丘精神失常。"},
+
+{id:"pc55n",stem:"#pc55|戒條",en:" ",pli:" ",zh:"55.嚇比丘",bkn_pc:136
+,nd:" #nd_ap;，#p_chabbaggiya;嚇#p_sattarasavaggiye;，#p_sattarasavaggiye;被嚇哭了。"
+,fact:"1.對象：比丘。2.方式：嚇(*)。"
+,nooff:"1.雖然嚇到對方，但本來沒有嚇人的意圖。2.比丘精神失常。"},
+
+{id:"pc56n",stem:"#pc56|戒條",en:" ",pli:" ",zh:"56.無故生火取暖",bkn_pc:137
+,nd:" #nd_deer;，比丘們燒木柴取暖，住在木柴中的大黑蛇受熱，出來襲擊比丘。"
+,fact:"1.對象：木柴。2.方式：自己或命人燃燒。"
+,nooff:"1.生病。2.在別人燒的木柴旁取暖。3.用木炭的碎片取暖。4.點燈、照明時(*)。5.在浴室時。6.其他適當理由。7.意外事故。8.比丘精神失常。"},
+
+{id:"pc57n",stem:"#pc57|戒條",en:" ",pli:" ",zh:"57.無故不足半個月便洗澡",bkn_pc:138
+,nd:" #nd_kld;比丘們到多浮陀河沐浴，頻婆娑羅王也去。等到比丘們沐浴完畢，王才沐浴，此時城門已經關閉，頻婆娑羅王只好在城外過夜。"
+,fact:"1.時間：不足半個月。2.方式：沐浴。"
+,nooff:"1.半個月或半個月以上沐浴一次。2.渡河時沐浴。3.在偏僻的地方。4.意外事故。5.比丘精神失常。"},
+
+{id:"pc58n",stem:"#pc58|戒條",en:" ",pli:" ",zh:"58.(新衣染)難看的顏色",bkn_pc:139
+,nd:" #nd_ap;，比丘們和遍行外道遭盜賊強奪，士兵捉到強盜後請比丘們前去認領遭劫的衣物，但比丘們無法辦認自己的衣物。"
+,fact:"1.對象：新衣服。2.方式：沒有染上深顏色。"
+,nooff:"1.染色後才穿著。2.染色後褪色。3.染色的地方破了。4.不是用染的，而是用深顏色的布補上去。5.用其他的布補上去。6.縫衣服的邊(*)。7.比丘精神失常。"},
+
+{id:"pc59n",stem:"#pc59|戒條",en:" ",pli:" ",zh:"59.與出家眾分享衣服後未經捨出即穿用",bkn_pc:139
+,nd:" #nd_ap;，#p_upananda;將衣服分配(*)給同住的比丘後，卻不交給他而繼續使用。"
+,fact:"1.對象：比丘﹑比丘尼﹑沙彌﹑沙彌尼。2.方式：分配衣服。3.結果：沒有交給他們而繼續使用。"
+,nooff:"1.分配後有給予。2.確定物主會樂意給予而繼續使用。3.比丘精神失常。"},
+
+{id:"pc60n",stem:"#pc60|戒條",en:" ",pli:" ",zh:"60.藏比丘的物品",bkn_pc:141
+,nd:" #nd_ap;，#p_sattarasavaggiye;沒有收拾自己的生活用品，#p_chabbaggiya;便將他們的衣服﹑缽藏起來，不還給他們，#p_sattarasavaggiye;因而哭泣。"
+,fact:"1.對象：生活用品(*)。2.方式：隱藏。"
+,nooff:"1.並非開玩笑，而是在整理的時候將物品收拾到別處。2.當對方隨意放置物品時，先收起來，待勸誡後再還他。3.比丘精神失常。"},
+
+{id:"pc61n",stem:"#pc61|戒條",en:" ",pli:" ",zh:"61.故意殺生",bkn_pc:142
+,nd:" #nd_ap;，#p_udayi;因為不喜歡烏鴉，將烏鴉射下來，割斷其頭，並串在一起。"
+,fact:"1.對象：動物(*)。2.方式：奪取生。"
+,nooff:"1.無意。2.不小心。3.沒有起殺心。4.比丘精神失常。"},
+
+{id:"pc62n",stem:"#pc62|戒條",en:" ",pli:" ",zh:"62.明知而使用有生物的水",bkn_pc:143
+,nd:" #nd_ap;，#p_chabbaggiya;知道水中有生物而飲用。"
+,fact:"1.對象：有生物的水。2.方式：明知而飲用。"
+,nooff:"1.不知道水中有生物。2.飲用沒有生物的水。3.知道喝了不會傷害生物而喝。4.比丘精神失常。"},
+
+{id:"pc63n",stem:"#pc63|戒條",en:" ",pli:" ",zh:"63.擾亂依法處置的案件",bkn_pc:144
+,nd:" #nd_ap;，#p_chabbaggiya;知道諍事已經如法評判，又提出訴訟說：「這是不如法的評判，應該再重新羯磨決定。」"
+,fact:"1.對象：已經如法評判的諍事(*)。2.方式：明知又提出訴訟。3.動機：擾亂。"
+,nooff:"1.對 (1)不如法的評判。(2)評判時只有少數人參予。(3)不按照程序羯磨的羯磨結果重新提出訴訟。2.比丘精神失常。"},
+
+{id:"pc64n",stem:"#pc64|戒條",en:" ",pli:" ",zh:"64.隱藏比丘的重罪",bkn_pc:0
+,nd:" #nd_ap;，優陀比丘犯「故意出精」(*)，告訴同住的比丘，請他不要說出去。"
+,fact:"1.對象：犯重罪(*)的比丘。2.方式：不舉罪。"
+,nooff:"1.如果說了(1)會使僧團產生糾紛。(2)破壞僧團和合。(3)會妨礙生命和梵行，所以不說。2.沒有如法的比丘在而不說。3.用其他方式使別人知道。4.比丘精神失常。"},
+
+{id:"pc65n",stem:"#pc65|戒條",en:" ",pli:" ",zh:"65.授比丘戒給未滿二十歲的人"
+,nd:" #nd_kld;，有十七位小孩出家，但不適應僧團生活，天還沒亮時，就吵著要吃東西，並把房間弄得零亂不堪。"
+,fact:"1.對象：未滿二十歲的人(*)。2.方式：承認(*)為比丘。"
+,nooff:"1.以為對方已滿二十歲而承認為比丘。2.承認已滿二十歲的人為比丘。3.比丘精神失常。"},
+
+{id:"pc66n",stem:"#pc66|戒條",en:" ",pli:" ",zh:"66.與賊隊約定同行",bkn_pc:145
+,nd:" #nd_ap;，比丘和一個商隊約定同行，商隊告訴比丘說他們將逃稅，比丘仍然與他們同行，在半路上一起被官兵逮捕。"
+,fact:"1.對象：違法的商隊(*)。2.方式：約定結伴同行。"
+,nooff:"1.不期而遇。2.盜賊約比丘同行，而不是比丘約盜賊。3.雖然約定同行，但沒有依約前往。4.比丘精神失常。"},
+
+{id:"pc67n",stem:"#pc67|戒條",en:" ",pli:" ",zh:"67.與女人約定同行"
+,nd:" #nd_ap;，某比丘在前往舍衛城的途中，遇到一位和丈夫吵架而離家出走的婦人，兩人便結伴同行；婦人的丈夫追上來後，毆打比丘。"
+,fact:"1.對象：女人。2.方式：約定結伴同行。"
+,nooff:"1.不期而遇。2.女人約比丘同行，而不是比丘約女人。3.雖然約定同行，但沒有依約前往。4.比丘精神失常。"},
+
+{id:"pc68n",stem:"#pc68|戒條",en:" ",pli:" ",zh:"68.主張淫欲不會障礙修行",bkn_pc:146
+,nd:" #nd_ap;，阿利德比丘對世尊所教「障道法」(*)產生懷疑，並批評說：「從事這些事，不會障礙修行。」比丘們加以勸說，他仍然固執己見。"
+,fact:"1.對象：佛所說的法。2.方式：批評。3.結果：比丘們勸說三次後，仍然固執己見。"
+,nooff:"1.其他比丘沒有加以勸說。2.受勸三次內悔改。3.比丘精神失常。"},
+
+{id:"pc69n",stem:"#pc69|戒條",en:" ",pli:" ",zh:"69.中止(與受不共住處罰的比丘)共食",bkn_pc:149
+,nd:" #nd_ap;，#p_chabbaggiya;知道阿利德比丘批評佛所說的法﹑不接受僧團的處分(*)，且不捨棄惡見，仍然和他來往，一起誦戒﹑羯磨，一起睡覺。"
+,fact:"1.對象：批評佛所說的法﹑不接受僧團處分﹑不放棄成見的比丘。2.方式：明知而和他一起吃飯(*)﹑共住﹑睡覺。"
+,nooff:"1.和 (1)無罪，(2)罪已懺除，(3)捨棄成見，的人一起吃飯﹑共住﹑睡覺。2.比丘精神失常。"},
+
+{id:"pc70n",stem:"#pc70|戒條",en:" ",pli:" ",zh:"70.接受被擯除的沙彌",bkn_pc:148
+,nd:" #nd_ap;，肯德沙彌對世尊所教「障道法」產生懷疑，並批評說：「從事這些事，不會障礙修行。」比丘們加以勸說，仍然固執己見，世尊便將肯德沙彌驅出僧團。#p_chabbaggiya;明知肯德沙彌已被僧團驅出，仍然安慰﹑照顧他，並與他共食﹑共宿。"
+,fact:"1.對象：已被僧團驅擯的沙彌(*)。2.方式：明知而安慰﹑照顧他，並與他共食﹑共宿。"
+,nooff:"1.和 (1)沒有被驅擯的沙彌來往。(2)捨棄成見的沙彌來往。2.比丘精神失常。"},
+
+{id:"pc71n",stem:"#pc71|戒條",en:" ",pli:" ",zh:"71.推拖如法的勸告",bkn_pc:149
+,nd:" #nd_gst;，#p_channa;行為違反僧團的規定，比丘們規勸他，他反而說，「等到我向有學問的比丘請教後，再遵守這條戒」。"
+,fact:"1.時間：行為違法。2.對象：依照學處規勸的比丘。3.方式：不接受規勸。"
+,nooff:"1.說：「我必須學習、研究戒律。」2.比丘精神失常。"},
+
+{id:"pc72n",stem:"#pc72|戒條",en:" ",pli:" ",zh:"72.迷惑小小戒",bkn_pc:150,note:true
+,nd:" #nd_ap;#p_chabbaggiya;見多數比丘都親近優婆離，向他請教戒律，擔心日後行為會經常受檢舉，便毀謗戒律。"
+,fact:"1.對象：學處。2.方式：毀謗。"
+,nooff:"1.說：「來，你學經﹑偈頌或論之後，再學律」沒有毀謗戒律的意思。2.比丘精神失常。"},
+
+{id:"pc73n",stem:"#pc73|戒條",en:" ",pli:" ",zh:"73.不專心誦戒",bkn_pc:151
+,nd:" #nd_ap;#p_chabbaggiya;行為違法，為了逃避處罰，推說不知道戒經中有這條規定。"
+,fact:"1.時間：誦戒經。2.方式：不專心。3.結果：犯戒後推說不知道戒經中有這條規定。"
+,nooff:"1.沒有聽到戒律的詳細解釋。2.聽到詳細的解釋二至三次以內。3.比丘精神失常。"},
+
+{id:"pc74n",stem:"#pc74|戒條",en:" ",pli:" ",zh:"74.打比丘",bkn_pc:152
+,nd:" #nd_ap;#p_chabbaggiya;因為憤怒不悅而毆打#p_sattarasavaggiye;，使他們哭泣。"
+,fact:"1.對象：比丘。2.方式：毆打。3.動機：憤怒不悅。"
+,nooff:"1.被困住時，為了逃出來而打擊。2.比丘精神失常。"},
+
+{id:"pc75n",stem:"#pc75|戒條",en:" ",pli:" ",zh:"75.作勢要打比丘",bkn_pc:153
+,nd:" #nd_ap;#p_chabbaggiya;因為憤怒不悅而舉手作勢打#p_sattarasavaggiye;，#p_sattarasavaggiye;被嚇哭了。"
+,fact:"1.對象：比丘。2.方式：舉手作勢打人。3.動機：憤怒不悅。"
+,nooff:"1.被困住時，為了逃出來而舉手作勢打人。2.比丘精神失常。"},
+
+{id:"pc76n",stem:"#pc76|戒條",en:" ",pli:" ",zh:"76.無根據毀謗比丘犯僧殘戒",bkn_pc:154
+,nd:" #nd_ap;#p_chabbaggiya;無憑無據地中傷某位比丘犯僧殘戒(*)。"
+,fact:"1.對象：比丘。2.方式：(1)自己沒有看見﹑聽見﹑懷疑，卻(2)毀謗某比丘是僧殘戒。"
+,nooff:"1.誤以為某比丘真的犯僧殘戒。2.比丘精神失常。"},
+
+{id:"pc77n",stem:"#pc77|戒條",en:" ",pli:" ",zh:"77.故意導致比丘追悔",bkn_pc:155
+,nd:" #nd_ap;#p_chabbaggiya;故意告訴#p_sattarasavaggiye;說，「未滿二十歲的人不被承認為比丘，你們都未滿二十歲，所以不被承認為比丘(*)」，使他們心生憂悔。"
+,fact:"1.對象：比丘。2.方式：使產生憂悔。"
+,nooff:"1.糾正說：「你未滿二十歲不被承認為比丘」﹑「你中午過後吃東西」﹑「你喝酒」﹑「你和女人秘密地坐在一起」，並說：「你要知道自己犯了什麼戒，以後不要再犯。」不是故意使人產生憂悔。2.比丘精神失常。"},
+
+{id:"pc78n",stem:"#pc78|戒條",en:" ",pli:" ",zh:"78.竊聽有諍端的比丘的談話",bkn_pc:156
+,nd:" #nd_ap;#p_chabbaggiya;與其他比丘們吵架後，偷聽他們說話(*)。"
+,fact:"1.對象：比丘。2.時間：吵架後。3.方式：偷聽他們說話。"
+,nooff:"1.聽到別人談話時應該離開，心想：「我不能偷聽」﹑「我必須離去」﹑「我就當作沒聽到(*)」﹑「雖然他們說我的不是，但我不可因此而生氣(*)」。2.比丘精神失常。"},
+
+{id:"pc79n",stem:"#pc79|戒條",en:" ",pli:" ",zh:"79.與欲(*)後批評如法的羯磨",bkn_pc:158
+,nd:" #nd_ap;#p_chabbaggiya;因為在縫製衣服而無法參加羯磨，便委託某位比丘代他們投票，但是知道羯磨結果後，又表示不滿。(*)"
+,fact:"1.時間：羯磨結束後。2.結果：不滿意羯磨結果。"
+,nooff:"1.對 (1)不依照規定舉行，(2)羯磨時只有少數人參予，(3)不值得羯磨表決的羯磨結果，表示不滿。2.比丘精神失常。"},
+
+{id:"pc80n",stem:"#pc80|戒條",en:" ",pli:" ",zh:"80.羯磨時未與欲就離席",bkn_pc:159
+,nd:" #nd_ap;#p_chabbaggiya;因為在縫製衣服而無法參加羯磨，便委託某位比丘代他們投票，受委託的比丘不同意僧團的提案，便起座離去。"
+,fact:"1.時間：羯磨(*)。2.動機：不同意。3.結果：起座離去。"
+,nooff:"1.為了避免 (1)僧團產生糾紛。(2)破壞僧團和合而離去。2.對 (1)不依照規定舉行，(2)羯磨時只有少數人參予，(3)不值得羯磨表決的羯磨提案不同意而離去。3.生病。4.內急。5.因其他意外事件而離去，不是故意妨礙羯磨而離去。6.比丘精神失常。"},
+
+{id:"pc81n",stem:"#pc81|戒條",en:" ",pli:" ",zh:"81.批評如法分配衣服",bkn_pc:159
+,nd:" #nd_ap;，#p_dabba;負責分配僧團的坐墊﹑臥具及飲食，但是自己卻穿得很單薄，僧團便把居士供養的一件衣服送給#p_dabba;。#p_chabbaggiya;知道後批評僧團分配東西時循私。"
+,fact:"1.時間：分配衣服後。2.對象：和合的僧團。3.方式：批評僧團循私(*)。"
+,nooff:"1.對於真的根據貪愛﹑憤怒﹑愚痴﹑怖畏所作的分配，說：「反正財物終將壞滅，這樣作有什麼好處呢？只是導致錯誤而己。」2.比丘精神失常。"},
+
+{id:"pc82n",stem:"#pc82|戒條",en:" ",pli:" ",zh:"82.轉移供養僧團的物品給個人",bkn_pc:160
+,nd:" #nd_ap;；舍衛城有一群居士準備了衣服和食物，將要供養僧團，#p_chabbaggiya;強行索去送給某位比丘。(*)"
+,fact:"1.對象：明知是供養僧團的物品。2.方式：命人轉送(*)給某位比丘(*)。"
+,nooff:"1.勸居士布施到可以使用這些物品、需要這些物品、帶來大利益及心情平靜的地方。2.比丘精神失常。"},
+
+{id:"pc83n",stem:"#pc83|戒條",en:" ",pli:" ",zh:"83.未經邀請越過國王寢宮的門檻"
+,nd:" #nd_ap;，阿難尊者進宮為波斯匿王的宮女說法，某日進入王的寢室時，王和王后同在床上，王后急忙起床，衣服不慎掉落。"
+,fact:"1.地點：房間。2.時間：剎帝王族的灌頂國王及王后尚未離開。3.方式：未經通告而進入國王寢宮的門檻。"
+,nooff:"1.經通告後進入王的寢室。2.不是剎帝王族的灌頂國王。3.王已經離開寢室。4.王后已離開寢室。5.王和王后均已離開寢室。6.地點不是寢室。7.比丘精神失常。"},
+
+{id:"pc84n",stem:"#pc84|戒條",en:" ",pli:" ",zh:"84.撿拾住處外的寶物",bkn_pc:161
+,nd:" #nd_ap;，某位比丘在阿致羅伐底河沐浴時，撿到五百元，婆羅門失主前去討回，因為想省卻酬謝金，便說袋中本來有一千元。"
+,fact:"1.地點：除了寺院或房間外。2.對象：珠寶(*)或認為是珠寶的物品(*)。3.方式：自己或命人撿拾。"
+,nooff:"1.在寺院或房間撿到珠寶或認為是珠寶的物品後，妥為保存(*)，心想：「物主將會  來拿走」。2.認為物主會樂意給予，將認為是珠寶的物品拿走。3.暫時保管。4.比丘精神失常。"},
+
+{id:"pc85n",stem:"#pc85|戒條",en:" ",pli:" ",zh:"85.非時未告共住比丘而入聚落"
+,nd:" #nd_ap;，#p_chabbaggiya;中午過後到村落去，高談闊論，受居士批評。"
+,fact:"1.時間：中午過後。2.地點：村落。3.方式：沒有告知在自己身邊的比丘而進入。"
+,nooff:"1.有非常緊急的事要辦，沒有告訴其他比丘便進去村落。2.沒有其他比丘在場。3.在半路上，無法告知其他比丘。4.到 (1)尼院 (2)外道住處 (3)供養食物的居士的家中。5.返回住處。6.所走的道會經過村落。7.意外事故。8.比丘精神失常。"},
+
+{id:"pc86n",stem:"#pc86|戒條",en:" ",pli:" ",zh:"86.叫人以骨、象牙、獸角制作針盒",bkn_pc:162
+,nd:" #nd_ng;，一位象牙匠自願供養比丘們針筒，不料許多比丘紛紛前往索取，象牙匠因此而生活困難。"
+,fact:"1.對象：骨頭﹑象牙﹑獸角製的針筒。2.方式：命人製作。"
+,nooff:"1.製造犍槌﹑打火器﹑鈕扣﹑藥箱﹑藥勺﹑小斧頭的柄﹑清潔用具的柄(*)。2.比丘精神失常。"},
+
+{id:"pc87n",stem:"#pc87|戒條",en:" ",pli:" ",zh:"87.床或長板凳的腳過長",bkn_pc:163
+,nd:" #nd_ap;巡行房舍，看見#p_upananda;睡在高床上。"
+,fact:"1.對象：椅子﹑床。2.方式：製作。3.結果：腳長超過八佛指（不包括下面裝橫木的部分）。"
+,nooff:"1.按照規定的尺寸製作。2.比規定的尺寸還短。3.得到超過規定尺寸的椅子後，將過長部分切除。4.比丘精神失常。"},
+
+{id:"pc88n",stem:"#pc88|戒條",en:" ",pli:" ",zh:"88.在床或椅長板凳上鋪棉花",bkn_pc:164
+,nd:" #nd_ap;#p_chabbaggiya;在床上和椅子上鋪棉花，居士們拜訪時看見而批評。"
+,fact:"1.對象：椅子﹑床。2.方式：鋪棉花。"
+,nooff:"1.縫製衣服的鈕扣﹑腰帶﹑肩紐，及製作缽袋﹑濾水囊﹑枕頭2時，使用棉花。2.用鋪椅子或床的棉花作鈕扣等合規定的物品。3.比丘精神失常。"},
+
+{id:"pc89n",stem:"#pc89|戒條",en:" ",pli:" ",zh:"89.坐墊太大"
+,nd:" #nd_ap;#p_chabbaggiya;製作墊布時，因為做得很大，披掛在床上﹑椅子上。(*)"
+
+,fact:"1.對象：墊布(*)。2.方式：製作。3.結果：超過「長二佛指距，寬一個半佛指距，邊緣一佛指距」的規定。"
+,nooff:"1.按照規定的尺寸製作。2.比規定的尺寸還小。3.得到超過規定尺寸的墊布後，將過長部分剪掉。4.做傘蓋﹑地墊﹑帷幕﹑椅墊﹑蒲團。5.比丘精神失常。"},
+
+{id:"pc90n",stem:"#pc90|戒條",en:" ",pli:" ",zh:"90.覆瘡衣太大",bkn_pc:165
+,nd:" #nd_ap;#p_chabbaggiya;穿覆瘡衣時，因為做得很大，走路時必須拉起衣襟。"
+,fact:"1.對象：覆瘡衣(*)。2.方式：製作。3.結果：超過「長四佛指距，寬二佛指距」的規定。"
+,nooff:"1.按照規定的尺寸製作。2.比規定的尺寸還小。3.得到超過規定尺寸的覆瘡衣後，將過長部分剪掉。4.做傘蓋﹑地墊﹑帷幕﹑椅墊﹑蒲團。5.比丘精神失常。"},
+
+{id:"pc91n",stem:"#pc91|戒條",en:" ",pli:" ",zh:"91.雨衣太大"
+,nd:" #nd_ap;#p_chabbaggiya;穿雨浴衣(*)時，因為做得很大，走路時必須拉起衣襟。"
+,fact:"1.對象：雨浴衣。2.方式：製作。3.結果：超過「長六佛指距，寬二個半佛指距」的規定。"
+,nooff:"1.按照規定的尺寸製作。2.比規定的尺寸還小。3.得到超過規定尺寸的雨浴衣後，將過長部分剪掉。4.做傘蓋﹑地墊﹑帷幕﹑椅墊﹑蒲團。5.比丘精神失常。"},
+
+{id:"pc92n",stem:"#pc92|戒條",en:" ",pli:" ",zh:"92.衣服太大",bkn_pc:166
+,nd:" #nd_ap;阿難尊者的長相端正，又穿著和佛相同尺寸的衣服，上座比丘遠遠見到阿難尊者，以為是佛陀而起立致敬。"
+,fact:"1.對象：衣服。2.方式：製作。3.結果：和佛的衣服尺寸相同或比佛的衣服大。"
+,nooff:"1.比佛的衣服尺寸小。2.得到超過規定尺寸的衣服後，將過長部分剪掉。3.做傘蓋﹑地墊﹑帷幕﹑椅墊﹑蒲團。4.比丘精神失常。"},
+
+{id:"4patidesaniya_n",zh:"四應悔過",en:" ",has:"#pd1n#pd2n#pd3n#pd4n",pli:"Pāṭidesanīyā"},
+
+{id:"pd1n",stem:"#pd1|戒條",en:" ",pli:" ",zh:"1.親自接受非親戚比丘尼的食物"
+,nd:" #nd_ap;有一位比丘尼從舍衛城乞食歸來，見到比丘便將食物供養他，自己卻沒有進食，如此一連三天都是同樣的情況。"
+,fact:"1.對象：沒有親戚關係﹑進城乞食的比丘尼。2.方式：親手接受她的飯﹑菜來吃。"
+,nooff:"1.對象是：(1)有親戚關係的比丘尼。(2)式叉摩那。(3)沙彌尼。2.比丘尼將食物放在：(1)比丘附近(*)。(2)寺院。(3)尼院。(4)外道住處。3.返回住處。4.在村莊外給予。5.當比丘因為某些原因，必須食用非時藥﹑七日藥﹑盡形壽藥時。6.比丘精神失常。"},
+
+{id:"pd2n",stem:"#pd2|戒條",en:" ",pli:" ",zh:"2.不斥離「指示居士供養食物」的比丘尼"
+,nd:" #nd_kld;，居士供養比丘食物，#p_chabbaggiya;尼在一旁指揮居士說：「這裡放菜！這裡放飯！」於是#p_chabbaggiya;吃飽，而其他比丘沒有吃飽。"
+,fact:"1.時間：在居士家用餐。2.對象：指示居士分配食物的比丘尼。3.方式：沒有予以斥責(*)。"
+,nooff:"1.比丘尼託居士送自己的食物給比丘。2.比丘尼送食物給居士，但沒有指示他們要給哪一位比丘。3.比丘尼提醒居士，尚未給某位比丘食物。4.當居士沒有給某位比丘食物時，提醒他給予。5.提醒居士給予每一位比丘食物。6.比丘精神失常。"},
+
+{id:"pd3n",stem:"#pd3|戒條",en:" ",pli:" ",zh:"3.接受貧困的「有學聖者居士」的食物"
+,editornote:"此處有誤，學家不一定是有學聖者"
+,nd:" #nd_ap;，城中有一對夫婦信樂佛法，窮盡家產來布施僧眾。他們在上午準備的飯菜大多供養了比丘，因此時常沒有吃飯。"
+,fact:"1.時間：無病﹑未受邀請。2.對象：公認為有學養的居士。3.方式：直接接受其飯﹑菜來吃。"
+,nooff:"1.受邀請或生病時。2.吃受邀請或生病的人剩下的食物。3.當他們準備了食物供養其他比丘時。4.居士自動供養食物(*)。5.五種特別的供養：(1)固定的供養。(2)以餐券領取食物的供養。(3)每月十六日的月半供養。(4)每月一﹑八﹑十五﹑二十三日的齋戒日供養。(5)每月一﹑十六日的月初供養。6.當比丘因為某些原因，必須食用非時藥﹑七日藥﹑盡形壽藥時。7.比丘精神失常。"},
+
+{id:"pd4n",stem:"#pd4|戒條",en:" ",pli:" ",zh:"4.在危險的森林接受食物"
+,nd:" #nd_ng;，沙迦的僕人叛離，他知道沙迦的妻子將前往森林供養比丘食物，便在半路埋伏，襲擊沙迦的妻子。"
+,fact:"1.地點：森林中危險﹑恐怖的地方。2.時間：沒有事先警告居士。3.對象：居士。4.方式：親手接受其硬、軟食來吃。"
+,nooff:"1.已事先警告或生病時。2.吃已事先警告居士或生病的比丘剩下的食物。3.在會發生危險﹑恐怖的森林外接受食物後，帶回寺院食用(*)。4.吃長在寺院中的植物(*)。5.當比丘因為某些原因，必須食用非時藥﹑七日藥﹑盡形壽藥時。6.比丘精神失常。"},
+
+{id:"75sekhiya_n",zh:"七十五應學法",en:" ",pli:"sekhiyā",has:"#sk_g1n#sk_g2n#sk_g3n#sk_g4n#sk_g5n#sk_g6n#sk_g7n"},
+
+{id:"sk_g1n",zh:"sk1-10",en:" ",pli:" ",has:"#sk1n#sk2n#sk3n#sk4n#sk5n#sk6n#sk7n#sk8n#sk9n#sk10n"},
+{id:"sk_g2n",zh:"sk11-20",en:" ",pli:" ",has:"#sk11n#sk12n#sk13n#sk14n#sk15n#sk16n#sk17n#sk18n#sk19n#sk20n"},
+{id:"sk_g3n",zh:"sk21-30",en:" ",pli:" ",has:"#sk21n#sk22n#sk23n#sk24n#sk25n#sk26n#sk27n#sk28n#sk29n#sk30n"},
+{id:"sk_g4n",zh:"sk31-40",en:" ",pli:" ",has:"#sk31n#sk32n#sk33n#sk34n#sk35n#sk36n#sk37n#sk38n#sk39n#sk40n"},
+{id:"sk_g5n",zh:"sk41-50",en:" ",pli:" ",has:"#sk41n#sk42n#sk43n#sk44n#sk45n#sk46n#sk47n#sk48n#sk49n#sk50n"},
+{id:"sk_g6n",zh:"sk51-60",en:" ",pli:" ",has:"#sk51n#sk52n#sk53n#sk54n#sk55n#sk56n#sk57n#sk58n#sk59n#sk60n"},
+{id:"sk_g7n",zh:"sk61-75",en:" ",pli:" ",has:"#sk61n#sk62n#sk63n#sk64n#sk65n#sk66n#sk67n#sk68n#sk69n#sk70n#sk71n#sk72n#sk73n#sk74n#sk75n"},
+
+
+{id:"sk_nooff",zh:"五條件",en:"5 reasons",pli:" ",def:"1.無意。2.不小心。3.生病。4.意外事件。5.比丘精神失常。"},
+{id:"sk1n",stem:"#sk1|戒條",en:" ",pli:" ",zh:"1.圓整地穿內裙"
+,nd:" #nd_ap;，#p_chabbaggiya;穿裙子時前後下垂，受居士批評。"
+,fact:"1.對象：裙子。2.方式：不包覆全身。"
+,nooff:"#sk_nooff"},
+
+{id:"sk2n",stem:"#sk2|戒條",en:" ",pli:" ",zh:"2.圓整地穿上衣"
+,nd:" #nd_ap;，#p_chabbaggiya;穿著上衣時前後下垂，受居士批評。"
+,fact:"1.對象：上衣。2.方式：不包覆全身。"
+,nooff:"#sk_nooff"},
+
+{id:"sk3n",stem:"#sk3|戒條",en:" ",pli:" ",zh:"3.整齊包好衣服走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時，沒有包覆好衣服，身體露出來，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：衣著不包覆整齊。"
+,nooff:"#sk_nooff"},
+
+{id:"sk4n",stem:"#sk4|戒條",en:" ",pli:" ",zh:"4.整齊包好衣服坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，沒有穿好衣服，身體露出來，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：衣著不整齊。"
+,nooff:"#sk_nooff"},
+
+{id:"sk5n",stem:"#sk5|戒條",en:" ",pli:" ",zh:"5.守護威儀(*)走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;搖擺手足地前往居士家，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：威儀不端正。"
+,nooff:"#sk_nooff"},
+
+{id:"sk6n",stem:"#sk6|戒條",en:" ",pli:" ",zh:"6.守護威儀坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，搖擺手足，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：威儀不端正。"
+,nooff:"#sk_nooff"},
+
+{id:"sk7n",stem:"#sk7|戒條",en:" ",pli:" ",zh:"7.垂目而視走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時左右顧視，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：沒有垂目而視(*)。"
+,nooff:"#sk_nooff"},
+
+{id:"sk8n",stem:"#sk8|戒條",en:" ",pli:" ",zh:"8.垂目而視坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，左右顧視，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：沒有垂目而視。"
+,nooff:"#sk_nooff"},
+
+{id:"sk9n",stem:"#sk9|戒條",en:" ",pli:" ",zh:"9.不拉高衣服走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時撩起衣服，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：拉高衣服。"
+,nooff:"#sk_nooff"},
+
+{id:"sk10n",stem:"#sk10|戒條",en:" ",pli:" ",zh:"10.不拉高衣服坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，拉高衣服，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：拉高衣服。"
+,nooff:" #sk_nooff; 5.入雨安居(*)"},
+
+{id:"sk11n",stem:"#sk11|戒條",en:" ",pli:" ",zh:"11.不大笑走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時大笑，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：大笑。"
+,nooff:" #sk_nooff; 5.發生有趣的事情時微笑。"},
+
+{id:"sk12n",stem:"#sk12|戒條",en:" ",pli:" ",zh:"12.不大笑坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，大笑，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：大笑。"
+,nooff:" #sk_nooff; 5.發生有趣的事情時微笑"},
+
+{id:"sk13n",stem:"#sk13|戒條",en:" ",pli:" ",zh:"13.前往住宅區時只小聲談話"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時高聲交談，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：高聲交談。"
+,nooff:"#sk_nooff"},
+
+{id:"sk14n",stem:"#sk14|戒條",en:" ",pli:" ",zh:"14.坐在住宅區時只小聲談話"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，高聲交談，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：高聲交談。"
+,nooff:"#sk_nooff"},
+
+{id:"sk15n",stem:"#sk15|戒條",en:" ",pli:" ",zh:"15.不晃動身體走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時昂首闊步走路，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：晃動身體。"
+,nooff:"#sk_nooff"},
+
+{id:"sk16n",stem:"#sk16|戒條",en:" ",pli:" ",zh:"16.不晃動身體坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，昂首闊步走路，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：晃動身體。"
+,nooff:" #sk_nooff; 5.入雨安居。"},
+
+{id:"sk17n",stem:"#sk17|戒條",en:" ",pli:" ",zh:"17.不揮擺手臂走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時揮動手臂，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：揮動手臂。"
+,nooff:"#sk_nooff"},
+
+{id:"sk18n",stem:"#sk18|戒條",en:" ",pli:" ",zh:"18.不揮擺手臂坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時揮動手臂，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：揮動手臂。"
+,nooff:" #sk_nooff; 5.入雨安居。"},
+
+{id:"sk19n",stem:"#sk19|戒條",en:" ",pli:" ",zh:"19.不搖頭晃腦走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時搖頭晃腦，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：搖頭晃腦。"
+,nooff:"#sk_nooff"},
+
+{id:"sk20n",stem:"#sk20|戒條",en:" ",pli:" ",zh:"20.不搖頭晃腦坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時搖頭晃腦，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：搖頭晃腦。"
+,nooff:" #sk_nooff; 5.入雨安居。"},
+
+{id:"sk21n",stem:"#sk21|戒條",en:" ",pli:" ",zh:"21.不扠腰走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時扠腰，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：扠腰。"
+,nooff:"#sk_nooff"},
+
+{id:"sk22n",stem:"#sk22|戒條",en:" ",pli:" ",zh:"22.不扠腰坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時，扠腰，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：扠腰。"
+,nooff:" #sk_nooff; 5.入雨安居"},
+
+{id:"sk23n",stem:"#sk23|戒條",en:" ",pli:" ",zh:"23.不包著頭走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時包頭巾(*)，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：蓋頭巾。"
+,nooff:"#sk_nooff"},
+
+{id:"sk24n",stem:"#sk24|戒條",en:" ",pli:" ",zh:"24.不包著頭坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在居士家時蓋頭巾，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：蓋頭巾。"
+,nooff:" #sk_nooff; 5.入雨安居"},
+
+{id:"sk25n",stem:"#sk25|戒條",en:" ",pli:" ",zh:"25.不以腳尖或腳腫走到住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時蹲踞，受居士批評。"
+,fact:"1.時間：前往居士家。2.方式：蹲踞。"
+,nooff:"#sk_nooff"},
+
+{id:"sk26n",stem:"#sk26|戒條",en:" ",pli:" ",zh:"26.不抱住膝蓋坐在住宅區"
+,nd:" #nd_ap;，#p_chabbaggiya;前往居士家時垂靠在椅子上，受居士批評。"
+,fact:"1.時間：坐在居士家。2.方式：斜靠在椅子上。"
+,nooff:" #sk_nooff; 5.入雨安居"},
+
+{id:"sk27n",stem:"#sk27|戒條",en:" ",pli:" ",zh:"27.心存感激接受食物"
+,nd:" #nd_ap;，#p_chabbaggiya;受食時不專心，好像不想接受一樣，受居士批評。"
+,fact:"1.時間：接受食物。2.方式：不專心。"
+,nooff:"#sk_nooff"},
+
+{id:"sk28n",stem:"#sk28|戒條",en:" ",pli:" ",zh:"28.注視缽接受食物"
+,nd:" #nd_ap;，#p_chabbaggiya;受食時左顧右盼，以致於不知道食物快要溢出缽外。"
+,fact:"1.時間：接受食物。2.方式：左顧右盼。"
+,nooff:"#sk_nooff"},
+
+{id:"sk29n",stem:"#sk29|戒條",en:" ",pli:" ",zh:"29.接受成比例的飯羹"
+,nd:" #nd_ap;，#p_chabbaggiya;接受過多的羹，受居士批評。"
+,fact:"1.時間：接受食物。2.對象：羹和飯。3.方式：不等量。"
+,nooff:"  #sk_nooff; 4.豆羹以外的其他羹。5.向親戚取用。6.居士主動邀請。7.替別人拿。8.用自己的物品交換。"},
+
+{id:"sk30n",stem:"#sk30|戒條",en:" ",pli:" ",zh:"30.接受食物只齊缽緣"
+,nd:" #nd_ap;，#p_chabbaggiya;接受過多的食物而溢出缽外，受居士批評。"
+,fact:"1.時間：接受食物。2.對象：食物。3.方式：溢出缽外。"
+,nooff:"#sk_nooff"},
+
+{id:"sk31n",stem:"#sk31|戒條",en:" ",pli:" ",zh:"31.心存感激用餐"
+,nd:" #nd_ap;，#p_chabbaggiya;食用食物時不專心，好像不想吃一樣，受居士批評。"
+,fact:"1.時間：用餐。2.方式：不恭敬。"
+,nooff:"#sk_nooff"},
+
+{id:"sk32n",stem:"#sk32|戒條",en:" ",pli:" ",zh:"32.注視缽用餐"
+,nd:" #nd_ap;，#p_chabbaggiya;享用食物時左顧右盼，以致於不知道食物快要溢出缽外。"
+,fact:"1.時間：用餐。2.方式：左顧右盼。"
+,nooff:"#sk_nooff"},
+
+{id:"sk33n",stem:"#sk33|戒條",en:" ",pli:" ",zh:"33.順序地用餐"
+,nd:" #nd_ap;，#p_chabbaggiya;享用食物時到處走動，受居士批評。"
+,fact:"1.時間：用餐。2.方式：到處走動(*)。"
+,nooff:"  #sk_nooff; 4.給予別人食物。5.將食物撥到另一個容器時。6.特別的食物(*)。"},
+
+{id:"sk34n",stem:"#sk34|戒條",en:" ",pli:" ",zh:"34.吃成比例的飯菜"
+,nd:" #nd_ap;，#p_chabbaggiya;享用食物時，食用過多的羹，受居士批評。"
+,fact:"1.時間：用餐。2.對象：羹和飯。3.方式：不等量。"
+,nooff:"  #sk_nooff; 4.豆羹以外的其他羹。5.向親戚取用。6.居士主動邀請。7.替別人拿。8.用自己的財物交換。 "},
+
+{id:"sk35n",stem:"#sk35|戒條",en:" ",pli:" ",zh:"35.不從頂端揉捏食物而吃"
+,nd:" #nd_ap;，#p_chabbaggiya;享用食物時，由頂端揉捏，受居士批評。"
+,fact:"1.時間：用餐。2.對象：食物。3.方式：由頂端揉捏。"
+,nooff:"  #sk_nooff; 4.將剩下的食物集中揉捏而吃。"},
+
+{id:"sk36n",stem:"#sk36|戒條",en:" ",pli:" ",zh:"36.不為求更多菜而以.飯蓋住菜"
+,nd:" #nd_ap;，#p_chabbaggiya;為了獲得更多的羹或佐料，用飯覆蓋起來，受居士批評。"
+,fact:"1.時間：用餐。2.動機：為了獲得更多的羹或佐料。3.方式：用飯覆蓋起來。"
+,nooff:" 1.無意。2.不小心。3.居士覆蓋的。4.不為了獲得更多的羹或佐料而用飯覆蓋。5.意外事件。6.比丘精神失常。"},
+
+
+{id:"sk37n",stem:"#sk37|戒條",en:" ",pli:" ",zh:"37.無病時不為自己要求飯菜"
+,nd:" #nd_ap;，#p_chabbaggiya;無病而為自己乞求羹﹑飯來吃，受居士批評。"
+,fact:"1.時間：無病。2.動機：自己想吃的羹或飯。3.方式：乞求。"
+,nooff:" #sk_nooff; 4.向親戚取用。5.居士主動邀請。6.替別人拿。7.用自己的財物交換。"},
+
+{id:"sk38n",stem:"#sk38|戒條",en:" ",pli:" ",zh:"38.不心存不滿注意他人的缽"
+,nd:" #nd_ap;，#p_chabbaggiya;存心吹毛求疵而注視別人的缽，受居士批評。"
+,fact:"1.時間：接受食物。2.方式：注視別人的缽。"
+,nooff:" 1.無意。2.不小心。3.注視別人的缽想：「我要把食物給他」「我要請人給他食物」。4.沒有吹毛求疵的念頭(*)。5.意外事件。6.比丘精神失常。"},
+
+{id:"sk39n",stem:"#sk39|戒條",en:" ",pli:" ",zh:"39.不做過大的飯糰"
+,nd:" #nd_ap;，#p_chabbaggiya;作過大的飯團，受居士批評。"
+,fact:"1.時間：用餐。2.方式：做過大的飯團。"
+,nooff:"  #sk_nooff; 4.硬的食物。5.水果。6.特別的食物。9.第一個犯的人。"},
+
+{id:"sk40n",stem:"#sk40|戒條",en:" ",pli:" ",zh:"40.要做圓飯糰"
+,nd:" #nd_ap;，#p_chabbaggiya;作過大的飯團，受居士批評。"
+,fact:"1.時間：用餐。2.方式：做過大的飯團。"
+,nooff:"  #sk_nooff; 4.硬的食物。5.水果。6.特別的食物。"},
+
+{id:"sk41n",stem:"#sk41|戒條",en:" ",pli:" ",zh:"41.不張口待食"
+,nd:" #nd_ap;，#p_chabbaggiya;作長的團食，受居士批評。"
+,fact:"1.時間：用餐。2.對象：飯團。3.方式：不做成圓形。"
+,nooff:"#sk_nooff"},
+
+{id:"sk42n",stem:"#sk42|戒條",en:" ",pli:" ",zh:"42.用餐時不將手塞入口中"
+,nd:" #nd_ap;，#p_chabbaggiya;當飯團未近口邊時，就張口待食，受居士批評。"
+,fact:"1.時間：食物未送近口邊。2.方式：先張開口。"
+,nooff:"#sk_nooff"},
+
+{id:"sk43n",stem:"#sk43|戒條",en:" ",pli:" ",zh:"43.不口含飯糰說話"
+,nd:" #nd_ap;，#p_chabbaggiya;享用食物時，將手塞入口中，受居士批評。"
+,fact:"1.時間：用餐。2.方式：將手塞入口中。"
+,nooff:"#sk_nooff"},
+
+{id:"sk44n",stem:"#sk44|戒條",en:" ",pli:" ",zh:"44.不用投擲的方式送食入口"
+,nd:" #nd_ap;，#p_chabbaggiya;口含飯團說話，受居士批評。"
+,fact:"1.時間：口含飯團。2.方式：說話。"
+,nooff:"  #sk_nooff; 4.硬的食物。5.水果。6.特別的食物。"},
+
+{id:"sk45n",stem:"#sk45|戒條",en:" ",pli:" ",zh:"45.不咬斷飯糰來吃"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時，將食物擲入口中，受居士批評。"
+,fact:"1.時間：用餐。2.方式：將食物擲入口中。"
+,nooff:"  #sk_nooff; 4.硬的食物。5.水果。6.特別的食物。"},
+
+{id:"sk46n",stem:"#sk46|戒條",en:" ",pli:" ",zh:"46.不大口吃東西"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時，將飯團咬成兩半，受居士批評。"
+,fact:"1.時間：用餐。2.方式：將飯團咬成兩半。"
+,nooff:"  #sk_nooff; 4.水果。"},
+
+{id:"sk47n",stem:"#sk47|戒條",en:" ",pli:" ",zh:"47.用餐時不甩手"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時，狼吞虎嚥，受居士批評。"
+,fact:"1.時間：用餐。2.方式：大口吃。"
+,nooff:"1.無意。2.不小心。3.生病。4.撣灰塵。5.意外事件。6.比丘精神失常。"},
+
+{id:"sk48n",stem:"#sk48|戒條",en:" ",pli:" ",zh:"48.用餐時不散落飯粒"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時甩手，受居士批評。"
+,fact:"1.時間：用餐。2.方式：甩手。"
+,nooff:"  #sk_nooff; 4.撣灰塵時掉落飯粒。"},
+
+{id:"sk49n",stem:"#sk49|戒條",en:" ",pli:" ",zh:"49.用餐時不吐舌"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時散落飯粒，受居士批評。"
+,fact:"1.時間：用餐。2.方式：散落飯粒。"
+,nooff:"#sk_nooff"},
+
+{id:"sk50n",stem:"#sk50|戒條",en:" ",pli:" ",zh:"50.用餐時不咀嚼出聲"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西吐舌，受居士批評。"
+,fact:"1.時間：用餐。2.方式：吐舌。"
+,nooff:"#sk_nooff"},
+
+{id:"sk51n",stem:"#sk51|戒條",en:" ",pli:" ",zh:"51.用餐時吸食出聲"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時喳喳出聲，受居士批評。"
+,fact:"1.時間：用餐。2.方式：喳喳出聲。"
+,nooff:"#sk_nooff"},
+
+{id:"sk52n",stem:"#sk52|戒條",en:" ",pli:" ",zh:"52.用餐時不舔手"
+,nd:" #nd_gst;，一位婆羅門供養僧眾牛奶，比丘喝牛奶時嘶嘶出聲，某比丘開玩笑說：「僧眾因為太冷而發抖」。"
+,fact:"1.時間：用餐。2.方式：嘶嘶出聲。"
+,nooff:"#sk_nooff"},
+
+{id:"sk53n",stem:"#sk53|戒條",en:" ",pli:" ",zh:"53.用餐時不舔缽"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時舔手，受居士批評。"
+,fact:"1.時間：用餐。2.方式：舔手。"
+,nooff:"  #sk_nooff; 4.將少量的食物集中在一邊舔起來。"},
+
+{id:"sk54n",stem:"#sk54|戒條",en:" ",pli:" ",zh:"54.用餐時不舔嘴唇"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時舔缽，受居士批評。"
+,fact:"1.時間：用餐。2.方式：舔缽。"
+,nooff:"#sk_nooff"},
+
+{id:"sk55n",stem:"#sk55|戒條",en:" ",pli:" ",zh:"55.不用拿過食物的手拿飲水瓶"
+,nd:" #nd_ap;，#p_chabbaggiya;吃東西時舔嘴唇，受居士批評。"
+,fact:"1.時間：用餐。2.方式：舔嘴。"
+,nooff:"  #sk_nooff; 4.接過杯子後去洗手。"},
+
+{id:"sk56n",stem:"#sk56|戒條",en:" ",pli:" ",zh:"56.不將合著飯粒的洗缽水倒在住宅區"
+,nd:" #nd_deer;，比丘們吃過飯後沒有洗手，便直接拿飲用水瓶，受居士批評。"
+,fact:"1.時間：拿過食物。2.方式：沒有洗手而直接拿杯子。"
+,nooff:"  #sk_nooff; 4.先將飯粒撈出後(*)才倒掉洗缽水。"},
+
+{id:"sk57n",stem:"#sk57|戒條",en:" ",pli:" ",zh:"57.不對無病而拿傘的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對拿遮陽傘的人說法。"
+,fact:"1.對象：無病而拿遮陽傘的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk58n",stem:"#sk58|戒條",en:" ",pli:" ",zh:"58.不對無病而拿拐杖的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對拿拐杖的人(*)說法。"
+,fact:"1.對象：無病而拿拐杖的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk59n",stem:"#sk59|戒條",en:" ",pli:" ",zh:"59.不對無病而拿刀的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對拿刀的人說法。"
+,fact:"1.對象：無病而拿刀的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk60n",stem:"#sk60|戒條",en:" ",pli:" ",zh:"60.不對無病而拿武器的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對拿武器的人說法。"
+,fact:"1.對象：無病而拿武器的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk61n",stem:"#sk61|戒條",en:" ",pli:" ",zh:"61.不對無病而穿涼鞋的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對穿拖鞋的人說法。"
+,fact:"1.對象：無病而穿拖鞋的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk62n",stem:"#sk62|戒條",en:" ",pli:" ",zh:"62.不對無病而穿鞋子的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對穿涼鞋的人說法。"
+,fact:"1.對象：無病而穿涼鞋的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk63n",stem:"#sk63|戒條",en:" ",pli:" ",zh:"63.不對無病而坐在車上的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對坐在車上的人說法。"
+,fact:"1.對象：無病而坐在車上的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk64n",stem:"#sk64|戒條",en:" ",pli:" ",zh:"64.不對無病而躺在床上的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對躺在床上的人說法。"
+,fact:"1.對象：無病而躺在床上的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+
+{id:"sk65n",stem:"#sk65|戒條",en:" ",pli:" ",zh:"65.不對無病而抱住膝蓋坐著的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對斜靠在椅子上的人說法。"
+,fact:"1.對象：無病而斜靠在椅子上的人。2.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk66n",stem:"#sk66|戒條",en:" ",pli:" ",zh:"66.不對無病而綁頭巾的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對包頭巾的人說法。"
+,fact:"1.對象：無病而包頭巾的人。2.方式：說法。"
+,nooff:" #sk_nooff; 4.請他取下頭巾後才說法。"},
+
+{id:"sk67n",stem:"#sk67|戒條",en:" ",pli:" ",zh:"67.不對無病而包住頭的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;對蓋頭巾的人說法。"
+,fact:"1.對象：無病而蓋頭巾的人。2.方式：說法。"
+,nooff:" #sk_nooff; 4.請他取下頭巾後才說法。"},
+
+{id:"sk68n",stem:"#sk68|戒條",en:" ",pli:" ",zh:"68.坐在地上不對無而坐在位子的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在地上，對坐在椅子上的人說法。"
+,fact:"1.時間：坐在地上。2.對象：無病而坐在椅子的人。3.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk69n",stem:"#sk69|戒條",en:" ",pli:" ",zh:"69.坐在低處不對無病而坐在高處的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;坐在低處，對坐在高處的人說法。"
+,fact:"1.時間：坐在低處。2.對象：無病而坐在高處的人。3.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk70n",stem:"#sk70|戒條",en:" ",pli:" ",zh:"70.站著不對坐著的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;站著對坐在坐著的人說法。"
+,fact:"1.時間：站著。2.對象：無病而坐著的人。3.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk71n",stem:"#sk71|戒條",en:" ",pli:" ",zh:"71.站在後面不對無病而站在前面的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;站在後面，對站在前面的人說法。"
+,fact:"1.時間：站在後面。2.對象：無病而站在前面的人。3.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk72n",stem:"#sk72|戒條",en:" ",pli:" ",zh:"72.走在路邊不對無病而走在路中間的人說法"
+,nd:" #nd_ap;，#p_chabbaggiya;走在路邊，對走在路中間的人說法。"
+,fact:"1.時間：走在路邊。2.對象：無病而走在路中間的人。3.方式：說法。"
+,nooff:"#sk_nooff"},
+
+{id:"sk73n",stem:"#sk73|戒條",en:" ",pli:" ",zh:"73.無病時不站著大小便"
+,nd:" #nd_ap;，#p_chabbaggiya;站著大小便。"
+,fact:"1.時間：無病。2.方式：站著大小便。"
+,nooff:"#sk_nooff"},
+
+{id:"sk74n",stem:"#sk74|戒條",en:" ",pli:" ",zh:"74.無病時不在農作物上大小便、吐痰"
+,nd:" #nd_ap;，#p_chabbaggiya;在農作物上大小便﹑吐唾。"
+,fact:"1.時間：無病。2.對象：農作物。3.方式：大小便﹑吐唾。"
+,nooff:" #sk_nooff; 4.在沒有水的地方大小便或吐痰時，流到有水的地方。"},
+
+{id:"sk75n",stem:"#sk75|戒條",en:" ",pli:" ",zh:"75.無病時不在水上大小便、吐痰"
+,nd:" #nd_ap;，#p_chabbaggiya;在水上大小便﹑吐唾。"
+,fact:"1.時間：無病。2.對象：水。3.方式：大小便﹑吐唾。"
+,nooff:" #sk_nooff; 4.在沒有水的地方大小便或吐痰時，流到有水的地方"},
+
+{id:"adhikarana_n",zh:"7解決案件的規則",en:" ",pli:"Adhikaraṇa samathā",has:"#ak1n#ak2n#ak3n#ak4n#ak5n#ak6n#ak7n"},
+{id:"ak1n",stem:"#ak1|戒條",en:" ",pli:" ",zh:"1.當面法則"
+,nd:"羯磨時，#p_chabbaggiya;檢舉沒有列席的比丘。"
+,def:"不得在羯磨時檢舉未出席的比丘。"},
+
+{id:"ak2n",stem:"#ak2|戒條",en:" ",pli:" ",zh:"2.憶念法則"
+,nd:"慈、地比丘對#p_dabba;心生嫌隙，唆使比丘尼控告#p_dabba;曾與她行不淨行。"
+,def:"由被告比丘向大眾請求使用「記憶法則」，向僧眾表白自己是無罪的。"
+,attr:"1.比丘清淨無罪。2.受毀謗。3.主動向僧團請求。4.僧團答應。5.僧眾一致相信比丘所回憶的內容。"},
+
+{id:"ak3n",stem:"#ak3|戒條",en:" ",pli:" ",zh:"3.不再痴狂的法則"
+,nd:"加伽比丘在精神錯亂時，行為觸犯戒律，但是等到他神智清醒後，卻不記得曾犯的過錯。"
+,def:"由被告比丘在大眾前說明自己當時精神失常，請求僧團施行「無過法則」。"
+,attr:"比丘在犯錯的當時︰1.沒意識。2.有意識，但猶如在夢中。3.已發狂。"},
+
+
+{id:"ak4n",stem:"#ak4|戒條",en:" ",pli:" ",zh:"4.自白"
+,nd:"被告的比丘還沒有說出自己所犯的罪前，#p_chabbaggiya;便將之定罪。"
+,def:"被告比丘受呵責時，據實說出自己所犯的罪。"
+,attr:"1.被告比丘據實陳述。2.僧團確實定罪。"},
+
+{id:"ak5n",stem:"#ak5|戒條",en:" ",pli:" ",zh:"5.服從多數"
+,nd:"僧團中的比丘意見不合。"
+,def:"先選出主持投票的比丘，依投票結果，少數服從多數。"
+,attr:"1.不是微不足道的事。2.循正當程序。3.諍事的當事人記得。4.知道合法的一方人數較多。5.猜測合法的一方人數較多。6.知道僧團將不會因此而分裂。7.猜測僧團將不會因此而分裂。8.按照規定表決。9.和平地表決。10.能按照自己的意見表決。"},
+
+{id:"ak6n",stem:"#ak6|戒條",en:" ",pli:" ",zh:"6.處罰犯罪的人"
+,nd:"烏瓦羅比丘被舉罪時，故意說謊，言詞前後不一致。"
+,def:"被告比丘言詞閃爍，前後不一時，應由一位比丘向大眾請求施行「調查法則」。"
+,attr:"1.比丘不清淨。2.比丘無羞恥心。3.予以斥責。4.僧團決定用「調查法則」。5.依法進行﹕(1)被告比丘有出席。(2)詢問比丘。(3)比丘自己敘述犯罪情形。(4)合法、平和地進行。6.受調查比丘的限制︰(1)不得承認別人為比丘。(2)不得身為依止師。(3)不得收徒弟。(4)不得前去教導比丘尼。(5)不得與其他比丘交往。"},
+
+{id:"ak7n",stem:"#ak7|戒條",en:" ",pli:" ",zh:"7.取銷"
+,nd:"比丘們發生糾紛，行為及言語都犯了過錯，如果不停止的話，會犯下更多錯誤；如果一一檢舉這些比丘的話，又會使僧團分裂、不和合。"
+,def:"集合大眾，由一位比丘出來發言，告訴大家要依「撤銷法則」施行，就像用草來覆蓋一樣，不追究這件諍事。"
+,attr:"1.不是驅擯、僧殘戒。2.不影響到居士。3.不是眾所周知的事件。"}
+
+]
+	if (typeof module!=="undefined") {
+		module.exports=coreset;
+	} else {
+		window.rawdataset.push(coreset);
+	}
+})();
+//--></script>
+<script><!--
+(function(){
+	var mynote=[
+{id:"cetasika-mnemonic",zh:"心所口訣",content:"觸受想思一命意、尋伺勝解進喜欲；信念慚悔貪瞋捨、安快軟適達直慧。正語業命悲隨喜，無慚無悔痴掉舉；瞋嫉慳悔貪邪慢，昏沈睡眠有行疑。",def:"第一句是#7sabbacittasadharana;，第二句是#6pakinnaka;，第三句無貪無瞋捨去無字共七個美心所，第四句前六字是六組美心，三四句合起來是#19sobhanasadharana;加#pannindriya;，頭四句組成#saddhapanna;。第五句是#3virati;和#2appamanna;，第七、八句是#14akusala;，最後一句的#sasankharika;指#thina; #middha; 只出現在#5akusalasasankharikacitta; 色法只有輕快，柔軟、適業，無輕安、練達、正直。",en:"mnemonic for mental factor",pli:"-",is:"#mnemonic",stem:"#cetasika"},
+{id:"partofbody-mnemonic",zh:"32身分口訣",en:"mnemonic for 32 parts of the body",pli:"-",content:"「髮毛爪齒皮、肉腱骨髓腎；心肝膜脾肺、腸膜胃糞腦」「膽痰膿血汗脂肪、淚膏唾涕關節尿」",is:"#mnemonic",stem:"#32partofbody"},
+{id:"pancadvaravithi-mnemonic",zh:"五門心路口訣",content:"過動斷轉五，領度確速彼。",is:"#mnemonic",stem:"#pancadvaravithi",en:"mnemonic for 5 door process",pli:"-"},
+{id:"manodvaravithi-mnemonic",zh:"意門心路口訣",content:"動斷意速彼。",is:"#mnemonic",stem:"#manodvaravithi",en:"mnemonic for mind door process",pli:"-"},
+{id:"appanavithi-mnemonic",zh:"安止心路口訣",content:"動斷意遍近隨種，禪那速行或道果。",is:"#mnemonic",stem:"#appanavithi",en:"mnemonic for absorption process",pli:"-"},
+{id:"rupa-mnemonic",zh:"色法口訣",content:"地水火風四大種，眼耳鼻舌身淨色；顏聲香味觸無水，男女根色心命食（完成色）。空身語表快軟適，積集相續老無常（不完成色）。",is:"#mnemonic",stem:"#rupadhamma",en:"mnemonic for material phenomena",pli:"-"},
+
+{id:"citta-mnemonic",zh:"心識口訣",content:"欲界五四惡十二，貪悅捨邪有行八；瞋恚憂俱有行二，痴根捨疑掉舉二。十八無因七不善，眼耳鼻舌身識苦，領受推度善樂悅，五意轉笑唯作三。欲界美心二十四，大善果報唯作心，智悅捨俱有無行，十五十二道果八。",stem:"#citta",is:"#mnemonic",en:"mnemonic for mind and consciousness",pli:"-"}
+]
+mynote.attname='sukhanika_note';
+
+	if (typeof module!=="undefined") {
+		module.exports=mynote;
+	} else {
+		window.rawdataset.push(mynote);
+	}
+})();
+//--></script>
+</body>

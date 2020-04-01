@@ -1,0 +1,651 @@
+<html><head>
+<meta charset="UTF-8">
+<style>
+.unit {position: relative}
+chi {position: absolute; top:1em; white-space: nowrap}
+button {font-size:120%;}
+.pli {font-size:150% ;font-family: Tahoma;color:brown;}
+.unit::after {content:" ";}
+.trans {color:blue;cursor: pointer;font-size:150%;}
+.word{text-align: center}
+.hr {width:100%;border-bottom: dashed 1px brown}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body onload="init()">
+<div>
+<button onclick="render('anekajati')">許多生(早)</button>
+<button onclick="render('patthana')">廿四緣(早)</button>
+<button onclick="render('mahanamakkara')">大礼敬(晚)</button>
+<button onclick="render('ratanasutta')">宝經</button>
+<button onclick="render('vandana')">三宝功德</button>
+<button onclick="render('metta')">慈心</button>
+<button onclick="render('sharemerit')">发愿</button>
+<button onclick="render('patisanghayoniso')">四資具省思</button>
+<div id="main"></div>
+<script><!--
+const anekajati=`Anekajāti{許多生} Pāḷi{經文}
+namo{礼敬} tassa{彼} bhagavato{世尊} arahato{阿拉汉} sammāsambuddhassa{正自觉者}.
+Anekajāti saṃsāraṃ{轮回} ,sandhāvissaṃ{流转} anibbisaṃ{没发现} ; 
+gahakāraṃ{造屋者} gavesanto{寻找} ,dukkhājāti{诸苦生} punappunaṃ{再再} .
+gahakāraka{造屋者} diṭṭhosi{已见},puna{再} gehaṃ{屋} na{不} kāhasi{造};
+sabbāte{所有} phāsukābhaggā{椽已毁坏}, gahakūṭaṃ{栋梁} visaṅkhataṃ{已破坏} ;
+visaṅkhāragataṃ{已离行作} cittaṃ{心} , taṇhānaṃ{爱} khayam{尽}ajjhagā{证}. //已证诸爱尽。(三遍)
+
+Iti{如此} imasmiṃ{此} sati{有} idaṃ{彼} hoti{有}, imassuppādā{此生} idaṃ ，
+uppajjati{生}, yadidaṃ{此即是} - avijjā{无明} paccayā{缘} saṅkhārā{行},
+saṅkhāra{行} paccayā viññāṇaṃ{识} , viññāṇa{识} paccayā nāmarūpaṃ{名色} , 
+nāmarūpa{名色} paccayā saḷāyatanaṃ{六处} , 
+saḷāyatana{六处} paccayā phasso{触}, phassa{触} paccayā vedanā{受}, 
+vedanā paccayā taṇhā{爱}, taṇhā paccayā upādānaṃ{取} , 
+upādāna{取} paccayā bhavo{有}, bhava{有} paccayā jāti{生}, 
+jāti paccayā jarā{老} maraṇaṃ{死} soka{愁} parideva{悲}
+dukkha{苦} domanass{忧} upāyāsā{恼} sambhavanti{生起}.
+Evametassa{如此} kevalassa{整个} dukkhakkhandhassa{苦蕴} samudayo{生起} hoti{是}.
+
+Yadāhave{其时} pātubhavanti{清楚显现} dhammā{诸法};
+ātāpino{热忱} jhāyato{专注} brāhmaṇassa{婆罗门};
+athassa{于是} kaṅkhā{疑惑}vapayanti{消失} sabbā{一切};
+yato{因为} pajānāti{了知} sahetu{有因} dhammaṃ{诸法} .//因为了知有因诸法。
+Iti imasmiṃ asati{无} idaṃ na hoti , imassa{此} nirodhā{灭} //此无故彼无，此灭故彼灭。
+idaṃ nirujjhati{灭} , yadidaṃ -
+avijjā nirodhā saṅkhāra nirodho{灭}, 
+saṅkhāra nirodhā viññāṇa nirodho ,
+viññana{识} nirodhā nāmarūpa nirodho , 
+nāmarūpa nirodhā saḷāyatana nirodho , 
+saḷāyatana nirodhā phassa nirodho , 
+phassa nirodhā vedanā nirodho , 
+vedanā nirodhā taṇhā nirodho , 
+taṇhā nirodhā upādāna nirodho ,
+upādāna nirodhā bhava nirodho ,
+bhava nirodhā jāti nirodho ,
+jāti nirodhā jarā maraṇaṃ soka parideva 
+dukkha domanass upāyāsā nirujjhanti{灭} .
+Evametassa{如此} kevalassa dukkhakkhandhassa nirodho hoti .
+Yadāhave pātubhavanti dhammā ;//其时诸法清楚显现，
+ātāpino jhāyato brāhmaṇassa ;//于热忱专注婆罗门；
+athassa kaṅkhā vapayanti sabbā ;//他的一切疑惑消失，
+yato khayaṃ{灭尽} paccayānaṃ{诸缘} avedi{悟知} .//因为悟知诸缘灭尽。
+
+Iti imasmiṃ sati idaṃ hoti , imassuppādā idaṃ 
+uppajjati , imasmiṃ asati idaṃ na hoti , imassa 
+nirodhāidaṃ{灭彼} nirujjhati , yadidaṃ - 
+avijjā paccayā saṅkhārā , 
+saṅkhāra paccayā viññāṇaṃ ,
+viññāṇa paccayā nāmarūpaṃ , 
+nāmarūpa paccayā saḷāyatanaṃ , 
+saḷāyatana paccayā phasso , 
+phassa paccayā vedanā , 
+vedanā paccayā taṇhā , 
+taṇhā paccayā upādānaṃ , 
+upādāna paccayā bhavo , 
+bhava paccayā jāti ,
+jāti paccayā jarā maraṇaṃ soka parideva
+dukkha domanass upāyāsā sambhavanti . 
+
+Evametassa kevalassa dukkhakkhandhassa samudayo hoti .
+avijjāya{无明} tveva{如是} asesavirāga{完全離貪} nirodhā saṅkhāra nirodho , 
+saṅkhāra nirodhā viññāṇa nirodho , 
+viññāṇa nirodhā nāmarūpa nirodho , 
+nāmarūpa nirodhā saḷāyatana nirodho , 
+saḷāyatana nirodhā phassa nirodho , 
+phassa nirodhā vedanā nirodho , 
+vedanā nirodhā taṇhā nirodho , 
+taṇhā nirodhā upādāna nirodho , 
+upādāna nirodhā bhava nirodho , 
+bhava nirodhā jāti nirodho , 
+jāti nirodhā jarā maraṇaṃ soka parideva
+dukkha domanass upāyāsā nirujjhanti . 
+
+Evametassa kevalassa dukkhakkhandhassa nirodho hoti .
+yadāhave pātubhavanti dhammā ;//其时诸法清楚显现，
+ātāpino jhāyato brāhmaṇassa ;//于热忱专注婆罗门；
+vidhūpayaṃ{摧破} tiṭṭhati{住立} mārasenaṃ{魔军} ;//摧破诸魔军而住立，
+sūriyova{如太阳} obhāsaya{照耀} mantalikkhaṃ{天空} .//犹如太阳照耀天空。`
+//--></script>
+<script><!--
+const patthana=`Paṭṭhāna{发趣} mātikāpāṭha{论母诵}
+Hetupaccayo{因缘}, ārammaṇapaccayo{所缘缘},
+adhipatipaccayo{增上缘}, anantarapaccayo{无间缘},
+samanantarapaccayo{相续缘}, sahajātapaccayo{俱生缘},
+aññamaññapaccayo{相互缘}, nissayapaccayo{依止缘},
+upanissayapaccayo{亲依止缘}, purejātapaccayo{前生缘},
+pacchājātapaccayo{后生缘}, āsevanapaccayo{重复缘},
+kammapaccayo{业缘}, vipākapaccayo{异熟缘},
+āhārapaccayo{食缘}, indriyapaccayo{根缘},
+jhānapaccayo{禅那缘}, maggapaccayo{道缘},
+sampayuttapaccayo{相应缘}, vippayuttapaccayo{不相应缘},
+atthipaccayo{有缘}, natthipaccayo{无有缘},
+vigatapaccayo{离去缘}, avigatapaccayoti{不离去缘}.
+
+(Pubbaṇhasuttam){午前经}
+
+Jayanto{胜利者} bodhiyāmūle{菩提树下},//菩提树下胜利者，
+Sakyānaṃ{释迦族} nandivaḍḍhano{增喜悦} ,//为释迦族增喜悦；
+Evameva{如此} jayo{胜利} hotu{愿} ,//愿你也如此胜利，
+jayassu{得胜利} jayamaṅgale{胜利吉祥} .//得胜利胜利吉祥！
+
+Aparājita{不可战胜}pallaṅke{座}, //坐在不可战胜的
+sīse{顶} puthuvipukkhale{大地莲花} ,//一切诸佛灌顶处、
+Abhiseke{灌顶} sabbabuddhānaṃ{一切诸佛} ,//大地莲花座顶上，
+aggappatto{至高的成就} pamodati{随喜}. //随喜至高的成就！
+
+Sunakkhattaṃ{吉星象} sumaṅgalaṃ{善吉祥}
+suppabhātaṃ{善黎明} suhuṭṭhitaṃ{善奉祀} ;
+sukhaṇo{善刹那} sumuhutto{善瞬间} ca{与},
+suyiṭṭhaṃ{善献供} brahmacārisu{梵行者}.//善献供给梵行者。
+
+Padakkhiṇaṃ{增长} kāyakammaṃ{身业}
+vācākammaṃ{语业} padakkhiṇaṃ{增长}
+Padakkhiṇaṃ manokammaṃ{意业}
+paṇīdhi{志愿} te{彼} padakkhiṇe{增长}.//你的志愿是增长。
+
+Padakkhiṇāni{增长} katvāna{作之后}, //所作增长后，
+labhanta'tthe{达成目标} padakkhiṇe{增长} //.以增长达成目标。
+te atthaladdhā{达成} sukhitā{快乐},//愿你达成目标与快乐，
+virūḷhā{成长} Buddhasāsane{佛陀教法中};//并在佛教中成长！
+Arogā{健康} sukhitā{快乐} hotha{愿},
+saha{皆} sabbehi{一切} ñātibhi{亲戚}.//愿你和一切亲戚 皆健康、快乐！
+
+bhanvatu{愿} sabbamaṅgalam{诸吉祥},//愿得诸吉祥，
+rakkhantu{守护} sabbadevatā{诸天}//愿诸天守护；
+sabbabuddhānubhāvena{依诸佛威力}
+sadā{常} sukhī{快乐} bhavantu{愿} te .//愿你常快乐！
+
+bhanvatu sabbamaṅgalam ,
+rakkhantu sabbadevatā
+sabbadhammānubhāvena{依诸法威力} ,
+sadā sukhī bhavantu te .
+
+bhanvatu sabbamaṅgalam ,
+rakkhantu sabbadevatā
+sabbasaṅghānubhāvena{依诸僧威力} ,
+sadā sukhī bhavantu te .
+`
+//--></script>
+<script><!--
+const sharemerit=`
+Patthanā{发愿}
+Yaṃ{无論} pattaṃ{所成就} kusalaṃ{善} tassa{彼}, ānubhāvena{威力} pāṇino{众生} ;//以所成就之善的威力，
+sabbe{一切} saddhamma{正法} rājassa{王},//愿一切众生了知正法王
+ñatvā{了知} dhammaṃ{法} sukhāvahaṃ{导向快乐} .//导向快乐之法！
+Pāpuṇantu{到达} visuddhāya{清净}, sukhāya{快乐} paṭipattiyā{修行};//透过清净、快乐的修行，
+asokam{无忧}anupāyāsa{无恼}, nibbāna{涅槃} sukham{快乐}uttamaṃ{至上} .//愿到达无忧、无恼、至上快乐的涅槃！
+Ciraṃ{長久地} tiṭṭhatu{愿住立} saddhammo{正法},//愿正法久住！
+dhamme{法} hontu{愿} sagāravā{恭敬};//愿一切有情皆恭敬法！
+sabbepi{一切} sattā{有情}kālena{适时}, sammā{完全}devo{天} pavassatu{降雨}.//愿天适时降雨！
+Yathā{犹如}rakkhiṃ{保护} su{善} porāṇā{古老}, surājāno{善王} tathevimaṃ{真实} ;//犹如古代的善王般治国，
+rājārakkhatu{愿国王保护} dhammena{依法}, attanova{自己} pajaṃ{子孙} pajaṃ . //愿国王依法保护人民，犹如自己的子孙！
+imāya{以此} dhammānudhamma{法随法} paṭipattiyā{修行} buddhaṃ{佛} pūjemi{我敬奉}.//以此法随法行，我敬奉佛！
+imāya dhammānudhamma paṭipattiyā dhammaṃ{法} pūjemi .//以此法随法行，我敬奉法！
+imāya dhammānudhamma paṭipattiyā saṅghaṃ{僧} pūjemi .//以此法随法行，我敬奉僧！
+addhāimāya{切实依此} paṭipattiyā{修行}
+jāti{生} jarā{老} byādhi{病} maraṇamhā{死} parimuccissāmi{我将解脱}.
+
+Idaṃ{此} me{我} puññaṃ{功德} āsavakkhayā{諸漏} vahaṃ{帶來} hotu{愿}.//愿我此功德，导向诸漏尽！
+Idaṃ me puññaṃ nibbānassa{涅槃的} paccayo{缘} hotu .//愿我此功德，为证涅槃缘！
+Mama{我} puññabhāgaṃ{功德分} sabba{诸} sattānaṃ{有情} bhājemi{回向} ;//我此功德分，回向诸有情，
+Te{彼} sabbe{诸} me samaṃ{同得} puññabhāgaṃ labhantu{得到}.//愿彼等一切，同得功德分！`
+
+
+
+
+
+//--></script>
+<script><!--
+const ratanasutta=`Ratanasutta{寶經}
+panidhanato{愿} paṭṭhaya{今后} Tathāgatassa{如來的} dasa{十} pāramiyo{巴拉密}//自从发[至上]愿开始，[菩萨实践为成就]如来的十种巴拉密、
+dasa{十} upapāramiyo{隨巴拉密} dasa{十} paramattha{最上}pāramiyoti{巴拉密}//十种随巴拉密、十种究竟巴拉密，
+samatiṁsa{三十} pāramiyo{巴拉密} pañca{五} mahāpariccāge{大遍捨}//一共三十种巴拉密，五种大遍舍，
+lokatthacariyaṁ{世間善行} ñātatthacariyam{所知善行} buddhatthacariyanti{佛善行}//[以及]世间利行、所知利行和佛陀利行三种行。
+tisso{三} cariyāyo{行為} pacchimabhave{最後生} gabbhavokkantiṁ{入胎}//在最后生中，入胎、出生、
+jātiṁ{生} abhinikkhamanam{出家} padhānacariyaṁ{精勤行} bodhipallaṅke{菩提座}//出家、精勤行、于菩提座上
+māravijayaṁ{魔勝} sabbaññutaññaṇa{一切知智}ppaṭivedhaṁ{通達}//战胜魔罗、通达一切知智、
+dhammacakka{法輪}ppavattanaṁ{轉} nava{新} lokuttara{出世間}dhammeti{法}//转动法轮，[证悟]九种出世间法。
+sabbepi'me{諸} buddha{佛}guṇe{功德} āvajjetvā{思索}//在思维了佛陀的所有这些功德后，
+vesāliyā{毗舍離} tīsu{三} pākārantaresu{城墙間}//在韦沙离城的三道城墙之间，
+tiyāmarattiṁ{三夜晚} parittaṁ{少許} karonto{正在做}
+āyasmā{具壽} ānanda{阿難}tthero{上座} viya{如}
+kāruññacittaṁ{悲愍心} upaṭṭhapetvā{已經建立:} //在现起悲悯心之后，作了三夜如此的护卫。
+koṭī{一千萬}satasahassesu{十萬} cakkavaḷesu{輪圍} devatā{諸天}//千千万轮围世界的诸天，
+yassaṇaṃ{那威令} paṭiggaṇhanti{接受} yañca{} vesāliyā{毗舍離} pure{之前}//在韦沙离城领受了威令。
+rogā{病} manussa{人} dubbhikkha{飢饉} sambhūtaṁ{發生} //为了令已发生的疾病、非人和饥荒
+tividhaṁ{三種} bhayaṁ{怖畏} khippa{迅速} mantaradhāpesi{消除}，
+parittaṁ{护卫} taṁ{那} bhaṇāma{誦讀} he{啊} //让我们诵彼护卫经！
+
+Yānīdha{此處} bhūtāni{生類} samāgatāni{集合}  //凡会集此诸鬼神，
+bhummāni{地居} vā{或} yāni{無論} va{或} antalikkhe{空居}  //无论地居或空居，
+sabbe{所有} va{或} bhūtā{生類} sumanā{快樂} bhavantu{愿他們}  //愿一切鬼神欢喜，
+atho{並且} pi{也} sakkacca{尊敬地} suṇantu{聽} bhāsitaṃ{所說}  //请恭敬听闻所说。
+
+Tasmā{是故} hi{確} bhūtā{生類} nisāmetha{傾聽} sabbe{所有}  //故一切鬼神倾听：
+mettaṃ{慈心} karotha{作} mānusiyā{人類} pajāya{世代} //散播慈爱给人类
+divā{晝} ca{與} ratto{夜} ca{與} haranti{使歡喜} ye{彼} baliṃ{獻供} //日夜持来献供者，
+tasmā{是故} hi{確} ne{彼} rakkhatha{守護} appamattā{不放逸}  //故应保护莫放逸。
+
+Yaṃ{任何} kiñci{某} vittaṃ{財富} idha{在此} vā{或} huraṃ{他世} vā{或} //所有此.他世财富，
+saggesu{在天界} vā{或} yaṃ{任何} ratanaṃ{宝} paṇītaṃ{殊胜} //或于天界殊胜宝，
+na{無} no{確實} samaṃ{相等} atthi{有} Tathāgatena{如來} //无有等同如来者。
+idam{這} pi{也} Buddhe{佛} ratanaṃ paṇītaṃ //此乃佛之殊胜宝，
+etena{此} saccena{諦} suvatthi{安乐} hotu{愿}  //以此实语愿安乐！
+
+Khayaṃ{灭尽} virāgaṃ{离贪} amataṃ{不死} paṇītaṃ //尽.离贪.不死.殊胜，
+yad{哪} ajjhagā{獲得} Sakyamunī{释迦牟尼} samāhito{得定} //得定释迦牟尼证，
+na{無} tena{由于} dhammena{法} sam'atthi{相等} kiñci{某物}  //无有等同彼法者。
+idam pi Dhamme{法} ratanaṃ paṇītaṃ //此乃法之殊胜宝，
+etena saccena suvatthi hotu //以此实语愿安乐！
+
+Yam{哪} buddhaseṭṭho{最胜佛} parivaṇṇayī{稱贊} suciṃ{清净} //最胜佛所赞清净，
+samādhim{定} ānantarikañ{無間} ñam{名} āhu{謂} //谓为无间三摩地，
+samādhinā{定} tena samo{等同} na{不} vijjati{見}  //不见等同该定者。
+idam pi Dhamme ratanaṃ paṇītaṃ //此乃法之殊胜宝，
+etena saccena suvatthi hotu //以此实语愿安乐！
+
+Ye{彼} puggalā{士} aṭṭha{八} sataṁ{善士} pasatthā{称赞} //为诸善士称赞者，
+cattāri{四} etāni{那} yugāni{双} honti{是} //他们乃四双八士，
+te{他們} dakkhiṇeyyā{应供养} Sugatassa{善至的} sāvakā{弟子} //善至弟子应供养，
+etesu{此} dinnāni{布施} mahapphalāni{大果} //布施于此得大果。
+idam pi Saṃghe{僧} ratanaṃ panītaṃ //此乃僧之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+Ye suppayuttā{善用者} manasā{意} daḷhena{坚固} //以坚固意.善用者，
+nikkāmino{离欲} Gotama{苟答马} sāsanamhi{教法中} //苟答马教中离欲，
+te pattipattā{已到達} amataṃ{不死} vigayha{進入} //彼达利得.入不死，
+laddhā{已獲得} mudhā{无偿} nibbutiṃ{寂灭} bhuñjamānā{受用}  //无偿获得享寂灭。
+idam pi Saṃghe ratanaṃ paṇītaṃ //此乃僧之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+
+Yath'{如} indakhīlo{帝柱} paṭhaviṃ{地} sito{仰賴} siyā{是} //犹如帝柱依地立，
+catubbhi{四面} vātehi{風} asampakampiyo{不动摇} //四面来风不动摇；
+tathūpamaṃ{譬如} sappurisaṃ{善男子} vadāmi{说} //我说譬如善男子，
+yo{哪} ariyasaccāni{圣谛} avecca{决定} passati{见}  //决定见诸圣谛者。
+idam pi Saṃghe ratanaṃ paṇītaṃ //此乃僧之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+Ye ariyasaccāni vibhāvayanti{明了} //凡明了诸圣谛者，
+gambhīra{深}paññena{以智慧} sudesitāni{所善說} //由深慧者所善说，
+kiñcāpi{即使} te honti bhusappamattā{极放逸} //即使他们极放逸，
+na te bhavaṃ{存有} aṭṭhamaṃ{八} ādiyanti{拿取}  //亦不再受第八有。
+idam pi Saṃghe ratanaṃ paṇītaṃ //此乃僧之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+Sahā{共同} v'assa{時} dassanasampadāya{成就知見} //彼成就见之同时，
+tayas{三} su{善} dhammā{法} jahitā{断除} bhavanti{存有} //实已断除三种法：
+sakkāyadiṭṭhi{有身見} vicikicchitañ{怀疑} ca //有身邪见与怀疑、
+sīlabbataṃ{戒禁取} vā pi yad atthi kiñci //戒禁取乃至其余；
+catūh'{四} apāyehi{惡趣} ca vippamutto{已解脫} //他已解脱四恶趣，
+cha{六} cābhiṭhānāni{逆罪} abhabbo{不可能} kātuṃ{造}  //不可能造六逆罪。
+idam pi Saṃghe ratanaṃ paṇītaṃ //此乃僧之殊胜宝，
+etena saccena suvatthi hotu //以此实语愿安乐！
+
+kiñcāpi so{他} kammaṃ{业} karoti{造作} pāpakaṃ{恶} //即使他造作恶业，
+kāyena{以身} vācā{語} uda{或} cetasā{心念} vā //由身或语或心念，
+abhabbo so tassa{彼} paṭicchadāya{覆藏} //不可能将它覆藏，
+abhabbatā{不可能} diṭṭhapadassa{见道者} vuttā{谓} //谓见道者不可能。
+idam pi Saṃghe ratanaṃ paṇītaṃ //此乃僧之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+Vanappagumbe{树丛上} yathā{如同} phussitagge{开花} //犹如热季第一月，
+gimhāna{夏} māse{月} paṭhamasmiṃ{初} gimhe{热季} //花开林中树丛上；
+tathūpamaṃ dhammavaraṃ{最上法} adesayi{所示} //譬如所示最上法，
+nibbānagāmiṃ{导向涅槃} paramaṃhitāya{至上利}  //导向涅槃至上利。
+idam pi Buddhe ratanaṃ paṇītaṃ //此乃佛之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+Varo{最胜者} varaññū{最胜知者} varado{最胜与者} varāharo{持胜} //最胜者知.与.持胜，
+anuttaro{无上} dhammavaraṃ adesayi //无上者教示胜法。
+idam pi Buddhe ratanaṃ paṇītaṃ //此乃佛之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+Khīṇaṃ{已尽} purāṇaṃ{旧} navaṃ{新} n'atthi{不} sambhavaṃ{生} //已尽旧者新不生，
+virattacittā{心离染} āyatike{在未来} bhavasmiṃ{存有} //于未来有心离染，
+te khīṇabījā{尽种子} avirūḷhichandā{不增長欲} //彼尽种子不增欲，
+nibbanti{寂灭} dhīrā{贤者} yathāyam{如此} padīpo{灯} //诸贤寂灭如此灯。
+idam pi Saṃghe ratanaṃ paṇītaṃ //此乃僧之殊胜宝，
+etena saccena suvatthi hotu  //以此实语愿安乐！
+
+Yānīdha bhūtāni samāgatāni //凡会集此诸鬼神，
+bhummāni vā yāni va antalikkhe //无论地居或空居，
+tathāgataṃ{如來} deva{天}manussa{人}pūjitaṃ{敬奉} //天人敬奉如来佛，
+Buddhaṃ{佛} namassāma{礼敬} suvatthi hotu  //我等礼敬愿安乐！
+
+Yānīdha bhūtāni samāgatāni //凡会集此诸鬼神，
+bhummāni vā yāni va antalikkhe //无论地居或空居，
+tathāgataṃ deva{}manussa{}pūjitaṃ //天人敬奉如来法，
+Dhammaṃ{法} namassāma suvatthi hotu  //我等礼敬愿安乐！
+
+Yānīdha bhūtāni samāgatāni //凡会集此诸鬼神，
+bhummāni vā yāni va antalikkhe //无论地居或空居，
+tathāgataṃ deva{}manussa{}pūjitaṃ //天人敬奉如来僧，
+Saṃghaṃ{僧} namassāma suvatthi hotū{愿} //我等礼敬愿安乐！`
+//--></script>
+<script><!--
+const vandana=`VANDANĀ{禮敬}
+itipi{如此} so{他} bhagavā{世尊} arahaṃ{阿拉汉}, sammā{正} sambuddho{正覺} 
+vijjā{明}caraṇa{行}sampanno{圓滿}, sugato{善至}, lokavidū{世間解}, 
+anuttaro{无上} purisadammasārathi{可被调御者之教練}, 
+satthā{老師} devamanussānaṃ{天與人} ,
+buddho{佛}, bhagavā
+
+svākkhāto{善說} bhagavatā{世尊的} dhammo{法},
+sandiṭṭhiko{自見}, akāliko{無時}, ehipassiko{來見}, opaneyyiko{導向(涅槃)},
+paccattaṃ{个别的} veditabbo{可证知} viññūhī{智者}
+
+suppañipanno{善行道者} bhagavato{世尊的} sāvakasaṅgho{弟子僧团}, 
+ujuppaṭipanno{正直行道者} bhagavato sāvakasaṅgho ,
+ñāyappañipanno{如理行道者} bhagavato sāvakasaṅgho ,
+sāmīcippañipanno{正当行道者} bhagavato sāvakasaṅgho , 
+yadidaṃ{即是} cattāri{四} purisayugāni{一双} aṭṭha{八} purisapuggalā{人士}, 
+esa{這样} bhagavato sāvakasaṅgho , 
+āhuneyyo{应受供养} pāhuneyyo{应受供奉} dakkhiṇeyyo{应受布施} añjalikaraṇīyo{應受合掌}, 
+anuttaraṃ{無上} puññakkhettaṃ{福田} lokassā{世間的}'
+`
+//--></script>
+<script><!--
+const metta=`Mettābhāvanā{散播慈愛}
+sabbe{一切} sattā{有情}, sabbe pāṇā{有息者}, sabbe bhūtā{生类}, 
+sabbe puggalā{个体}, sabbe attabhāva{自体者} pariyāpannā{属于},
+sabbā{一切} itthiyo{女性}, sabbe purisā{男性}, 
+sabbe ariyā{圣者}, sabbe anariyā{非圣者},
+sabbe devā{诸天}, sabbe manussā{人类}, sabbe vinipātikā{堕苦处者},
+averā{无怨敌} hontu{愿} , abyāpajjā{无瞋害} hontu ,
+anīghā{无恼乱} hontu , sukhī{快乐} attānaṃ{自己} pariharantu{保持} .
+dukkhāmuccantu{脱离诸苦}, 
+yathāladdha{所得} sampattito{成就} māvigacchantu{不失去},
+kammassakā{业的所有者} .
+puratthimāya{东} disāya{方向}, pacchimāya{西} disāya ,
+uttarāya{北} disāya , dakkhiṇāya{南} disāya ,
+puratthimāya anudisāya{南方}, pacchimāya anudisāya{北方},
+uttarāya anudisāya{东方}, dakkhiṇāya anudisāya{西方},
+heṭṭhimāya{下} disāya , uparimāya{上} disāya .
+sabbe sattā , sabbe pāṇā , sabbe bhūtā , sabbe puggalā , 
+sabbe attabhāva pariyāpannā ,
+sabbāitthiyo , sabbe purisā , sabbe ariyā , sabbe anariyā ,
+sabbe devā , sabbe manussā , sabbe vinipātikā
+averā hontu , abyāpajjā hontu ,
+anīghā hontu , sukhī attānaṃ pariharantu .
+dukkhāmuccantu , yathāladdha sampattito māvigacchantu , 
+kammassakā .
+
+uddhaṃ{上} yāva{直到} bhavaggāca{有顶天}, adho{下} yāva avīcito{无间地狱};
+samantā{普遍} cakkavāḷesu{轮围} , ye{彼} sattā pathavīcarā{地上走} ;//于普轮围界，地上走有情，
+abyāpajjā{无瞋} niverāca{无怨}, niddukkhācā{无苦}' nuppaddavā{无难}.
+uddhaṃ yāva bhavaggāca , adho yāva avīcito ;
+samantā cakkavāḷesu , ye sattā udakecarā{水中游} ;
+abyāpajjā niverāca , niddukkhācā ' nuppaddavā .
+uddhaṃ yāva bhavaggāca , adho yāva avīcito ;
+samantā cakkavāḷesu , ye sattā ākāsecara{空中飞} ;
+abyāpajjā niverāca , niddukkhācā ' nuppaddavā .`
+//--></script>
+<script><!--
+const mahanamakkara=`MahāNamakkāra{大礼敬}
+1. Sugataṃ{善至} sugataṃ{善语} seṭṭhaṃ{尊贵者} , //善至.善语的尊贵者， 
+kusalaṃkusalaṃ{善与不善} jahaṃ{已舍断} ; //已舍断善与不善；
+amataṃ{不死} amataṃ santaṃ{寂静} , //不死(涅槃).寂静的无比者，
+asamaṃ{无比} asamaṃ dadaṃ{施} .//施与无比的不死。
+Saraṇaṃ{皈依处} saraṇaṃ lokaṃ{世间} ,//世间的皈依处，知解世间，
+araṇaṃ{无染} araṇaṃ karaṃ{作} ;//无染者[导人]作无染；
+abhayaṃ{无畏者} abhayaṃ{无畏} ṭhānaṃ{处} ,//无畏者.至无畏处的导师，
+nāyakaṃ{导师} nāyakaṃ name{礼敬}.//礼敬导师！
+2. Nayana{目}subhaga{悦}kāyaṅgaṃ{身体} ,//拥有悦目的身体、
+madhura{甜美}vara{殊胜}saropetaṃ{声音+拥有} ;//甜美殊胜的声音；
+amita{无量}guṇa{功德}gaṇā{聚}dhāraṃ{持有} //,持有无量的功德聚，
+dasabalam{十力}atulaṃ{无比} vande{礼敬}.//礼敬无比的十力者！
+3. Yo{那} buddho{佛陀} dhitimāñña{稳固心意}dhārako{持有},//佛陀是持有稳固[定力]者.证悟者；
+saṃsāre{轮回中} anubhosi{证悟者} kāyikaṃ{身} ;
+dukkhaṃ{受苦} cetasikañca{与心} lokato{为了世间} ,//身与心在轮回中受苦；为了世间，
+taṃ{彼} vande{礼敬} naradeva{人天}maṅgalaṃ{吉祥者} .//礼敬彼人天的吉祥者！
+4. Bāttiṃ{三十二} satilakkhaṇa{相}citra{庄严}dehaṃ{身},//三十二相的庄严之身，
+deha{身体}jjuti{光明}niggata{放射出}pajjalantaṃ{辉耀} ;//身体放射出辉耀的光明；
+paññā{慧}dhiti{[定]力}sīla{戒}guṇoghavindaṃ{功德聚} ,//拥有慧.[定]力.戒的功德聚
+vande{礼赞} muni{牟尼}mantima{最后}jātiyuttaṃ{生者} .//礼赞牟尼.最后之生者！
+
+5. Pātodayaṃ{升起} bāla{早晨}divākaraṃ{太阳} va{或},//犹如早晨升起的朝阳，
+majjhe{中} yatīnaṃ{诸行者} lalitaṃ{庄严} sirīhi{祥瑞};//在诸行者中[显得]庄严祥瑞；
+puṇṇ{满}indu{月}saṅkāsa{似}mukhaṃ{脸} anejaṃ{无渴爱} ,//脸如满月.无渴爱，
+vandāmi{我礼赞} sabbaññumahaṃ{一切知} munindaṃ{牟尼王} .//我礼赞一切知的牟尼王！
+
+6. Upeta{具有}puñño{功德} vara{圣}bodhimūle{菩提树下},//6. 具足功德的善至，
+sasena{有军队的}māraṃ{魔} sugato{善至} jinitvā{降伏};//于菩提树下降伏魔军；
+abojjhi{觉悟} bodhiṃ{菩提} aruṇodayamhi{明相升起时},//在明相升起时觉悟菩提，
+namāmi{礼敬} taṃ mārajinaṃ{降魔} abhaṅgaṃ{不败者} .//礼敬彼降魔的不败者！
+
+7. Rāg{贪}ādiched{斩断}āmala{无秽垢}ñāṇakhaggaṃ{智之剑} ,//以念为盾，以智为剑，
+satīsa{念}maññā{思}phalakā{盾}bhigāhaṃ{到达} ;//斩断贪等而无秽垢；
+sīlogha{戒聚}laṅkāra{佩戴}vibhūsitaṃ{装饰} taṃ{彼} ,//他佩戴戒聚为装饰，
+namāmi{我礼敬}bhiññā{证智神通}varam{最上}iddh{神通}upetaṃ{具有} .//我礼敬具有证智的最上神通者！
+
+8. Dayālayaṃ{慈悲者} sabbadhi{一切生中} dukkaraṃ{难行} karaṃ{行} ,//慈悲者于一切生中难行能行，
+bhav{有}aṇṇavā{海}tikkamam{超越}aggataṃ{无上处} gataṃ{到达} ;//超越有海(生命的海洋)到达无上处；
+tiloka{三界}nāthaṃ{怙主} susamāhitaṃ{具妙定者} hitaṃ{利益者} ,//三界怙主.具妙定者.利益[众生]者，
+samantacakkhuṃ{普眼者} paṇamāmi{我礼拜} taṃmitaṃ{无量者} .//我礼拜普眼者.无量者！
+
+9. Tahiṃ{处} tahiṃ{处} pārami{巴拉密}sañcayaṃ{积累} cayaṃ{积} ,//[无量生中]处处积累巴拉密，
+gataṃ{到达} gataṃ sabbhi{善人们} sukhappadaṃ{安乐境} padaṃ{到达} ;//已到达善人们可到达的安乐境；
+narānarānaṃ{人、非人} sukhasambhavaṃ{引生快乐} bhavaṃ{有} ,//为诸人天引生快乐，
+namānamānaṃ{礼敬不屈者} jina{胜者}puṅgavaṃ{公牛} gavaṃ{公牛} .//礼敬不屈者.胜者.牛王！
+
+10. Maggaṅganāvaṃ{道支之舟} muni{牟尼}dakkha{熟练}nāviko{船师},//牟尼是道支之舟的熟练船师，
+īhā{努力}phiyaṃ{橹} ñāṇakarena{智作} gāhako{持};//以智手执持努力之橹；
+āruyha{登上} yo{哪} tāya{三} bahū{许多}bhavaṇṇavā{有海},//许多人乘坐它渡过有海.舍离痛苦，
+tāresi{渡过} taṃ buddhamaghappahaṃ{佛陀} name{礼敬}.//礼敬彼佛陀！
+
+11. Samatiṃ{三十} satipārami{巴拉密}sambharaṇaṃ{培育} ,//培育圆满三十种巴拉密，
+varabodhidume{圣菩提树下} catusacca{四谛}dasaṃ{領悟} ;//在菩提树下悟四谛；
+varam{最上之}iddhi{神通}gataṃ{已达} nara{人}deva{天}hitaṃ{利益} ,//已达最上之证智.利益人与天，
+tibhav{三有}ūpasamaṃ{寂止者} paṇamāmi{我礼拜} jinaṃ{胜者} .//我礼拜胜者.三有寂止者！
+
+12. Sata{百}puññaja{功德生}lakkhaṇikaṃ{具有(32)相} virajaṃ{离尘者} ,//由百种功德所生的具[三十二]相之离尘者，
+gagan{天空}ūpama{如}dhiṃ{智} dhiti{坚固}meru{须弥}samaṃ{如同} ;//智如天空.[定力]坚固如同须弥；
+jalaj{水生}ūpama{如}sītala{清涼}sīla{戒}yutaṃ{具有} ,//清净之戒如水中生长的[莲花]，
+pathavī{大地}sahanaṃ{坚忍} paṇamāmi{我礼敬} jinaṃ{胜者} .//坚忍如大地.我礼敬胜者！
+
+13. Yo buddho{佛陀} sumati{妙慧者} dive{白天} divākarova{太阳般},//佛陀.妙慧者如白天的太阳般照耀，
+sobhanto{照耀} ratijanane{生喜悦} sil{石}āsanamhi{座上};//坐在[令人]生喜悦的石座上，
+āsīno{坐在} siva{吉祥}sukhadaṃ{快乐} adesi{教导} dhammaṃ{法} ,//教导[阿毗]达摩.施与诸天[涅槃的]吉祥快乐，
+devānaṃ{诸天} tam{彼}asadisaṃ{无比者} namāmi{我礼敬} niccaṃ{恒常} .//我恒常礼敬彼无比者！
+
+14. Yo pāda{足}paṅkaja{莲花}muduttalarājikehi{柔软平整},///莲花足柔软平整；
+lokehi{世界} tīhivikalehi{无瑕玼} nirākulehi{不混乱};//带有无瑕玼.不混乱条纹的
+sampāpuṇe{到达} nirupameyyatameva{无以伦比} nātho{怙主},//到达三界无以伦比处的怙主，
+taṃ sabbalokam{一切世间}ahitaṃ{利益} asamaṃ{无双者} namāmi .//我礼敬彼利益一切世间的无双者！
+
+15. Buddhaṃ{佛陀} narānara{人.非人}samosaraṇaṃ{集会} dhitattaṃ{坚固} ,//佛陀是人.非人集会[的皈依处]，自己[定心]坚固.
+paññā{慧}padīpa{灯}juti{光}yāvihatandhakāraṃ{摧破黑暗} ;//以慧灯之光摧破[无明]黑暗；
+atthābhikāma{求义利者}naradeva{人天}hitāvahaṃ{来利益者} taṃ ,//[为有情世间]求义利者.为人天带来利益者
+vandāmi{我礼赞} kāruṇi{悲悯者}kamaggam{至上者}ananta{无边}ñāṇaṃ{智者} 无边智者.//我礼赞彼悲悯者.至上者.无边智者！
+
+16. Akhila{无余}guṇa{功德}nidhāno{宝藏} yo munindopagantvā{牟尼王},//16.无余功德宝藏的牟尼王，
+vanam{森林}isipatanavhaṃ{仙人落处} saññatānaṃ{自制者} niketaṃ{住处} ;//去到称为“仙人落处”的森林.自制者的住处；
+tahim{在那里}akusala{不善}chedaṃ{斩断} dhammacakkaṃ{法轮} pavatto{转动},//在那里转动法轮.斩断不善，
+tam{彼}atulam{无比}abhi{极}kantaṃ{可爱者} vandaneyyaṃ{应礼赞者} namāmi .//我礼敬彼无比者.极可爱者.应礼赞者！
+
+17. Suci{清净}parivāritaṃ{围绕} surucira{怡人的}ppabhāhi{光芒} rattaṃ ,//被清净众围绕.可喜的[身体发出]怡人的光芒，
+siri{吉祥}visar{扩散}ālayaṃ{住} gupitam{守护}indriyeh{诸根}upetaṃ{具备} ;//住立于吉祥聚.具备守护诸根；
+ravi{日}sasi{月}maṇḍalap{轮}pabhuti{之后}lakkhaṇo{相}pacittaṃ{多姿彩} ,//[足之轮]相从日月轮开始多姿彩，
+sura{神}nara{人}pūjitaṃ{敬奉者} sugatam{善至}ādaraṃ{恭敬地} namāmi{我礼敬}.//受天.人敬奉者，我恭敬地礼敬善至！
+
+18. Maggoḷumpena{道筏} muha{痴}paṭigh{瞋}āsādi{享受}-ullolavīciṃ{波涛} ,
+saṃsāroghaṃ{轮回暴流} tari{船} tamabhayaṃ{那无畏} pārapattaṃ{到达彼岸} pajānaṃ{渡过} ;//以道筏渡过[充满]痴.瞋.欲波涛的轮回暴流，到达那无畏的彼岸；
+tāṇaṃ{庇护所} leṇaṃ{避难所} asama{无比的}saraṇaṃ{皈依处} ekatitthaṃ{独一的} patiṭṭhaṃ{渡口} ,//人们的庇护所.避难所.无比的皈依处，独一的渡口.
+puññakkhettaṃ{功德田} paramasukhadaṃ{究竟乐} dhammarājaṃ{法王} namāmi .//依止处.功德田，我礼敬施究竟乐的法王！
+
+
+19. Kaṇḍambaṃ{甘哒芒} mūle{树下} parahitakaro{利他的} yo munindo{牟尼王} nisinno{坐在},//利他的牟尼王坐在甘哒芒果树下，
+accheraṃ{稀有} sīghaṃ{快速} nayana{目}subhagaṃ{幸運的} ākul{混杂}aṇṇ{水}aggi{火}jālaṃ{焰光} ;//快速[显现]稀有.悦目.水火焰混杂的[双神变]；
+dujjāladdhaṃ{邪网} saṃmuni{牟尼们}bhijahitaṃ{不舍} pāṭiheraṃ{神变} akāsi{做了},//为破坏邪[见]网.牟尼们不舍行神变，
+vande{礼赞} taṃ seṭṭhaṃ{尊贵的} parama{至上}ratijaṃ{乐} iddhidhammeh{神通法}upetaṃ{具有} //礼赞彼尊贵的.生至上乐的具神通法者！
+
+20. Munindakko{牟尼王} yeko{彼等} day{悲悯}udayaruṇo{朝阳} ñāṇa{智慧}vitthiṇṇa{广大}bimbo{圖像},//悲悯如朝阳.智慧广大圆满者，独一的牟尼王如太阳；
+vineyyap{可调教}pāṇoghaṃ{有情众} kamala{莲花}kathitaṃ{教导} dhammaraṃ{法光} sīvarehi{至上};//如清净池中的莲花，
+subodhesi{善觉悟} suddhe{清净} tibhavakuhare{三有中} byāpitakkitti{称誉}nañca{遍满},//以至上的法光善觉悟，
+tilokekaccakkhuṃ{三界独眼} dukhama{难忍}sahanaṃ{能忍} taṃ mahesiṃ{大仙} namāmi .//在三有中教导可调教的有情众.称誉遍满，我礼敬彼三界独眼.难忍能忍的大仙！
+
+21. Yo jino{胜者} anekajātiyaṃ{许多生中} saputtadāram{儿子.妻子}aṅga{肢体}jīvi{生命}tampi{那也},//胜者爱乐菩提故，在许多生中以无执著之心，
+
+bodhipemato{爱乐菩提故} alagga{无执著}mānaso{心} adāsiyeva{施与} atthikassa{希求者};//将儿子.妻子.肢体.生命施与希求者；
+dānapāramiṃ{布施巴拉密} tato{之後} paraṃ{完成} apūri{完成后} sīlapāramādikampi{戒巴拉密等},//完成布施巴拉密后再[完成]其他戒巴拉密等，
+tāsam{彼}iddhiyo{神通}payātam{达至}aggataṃ{最上者} tam{那}eka{独一}dīpakaṃ{洲} namāmi .//我礼敬彼以那些成就达至最上者.独一之洲！
+
+
+22. Devādevātidevaṃ{诸天之中的极} nidhanavapudharaṃ{持最后之身} 
+mārabhaṅgaṃ{破魔} abhaṅgaṃ{不败} ,//诸天之中的极[殊胜.清净之]天，持最后之身，破魔的不败者，
+dīpaṃ{明灯} dīpaṃ pajānaṃ{智慧} jayavarasayane{最上胜利座上}
+ bodhipattaṃ{达菩提}dhipattaṃ{增上} ;//诸人(有情)的[智慧]明灯，在最上胜利座上得达菩提.得达[世间]最胜处。
+brahm{梵天}ābrahm{非梵天}āgatānaṃ{来集} 
+vara{最上}gira{[法]音}kathikaṃ{演说} pāpahīnaṃ{已断恶} pahīnaṃ{劣} ,//梵天.非梵天(天.人)来集，演说最上[法]音；已断恶.劣，
+lok{世间}ālok{非世间}ābhirāmaṃ{所喜爱} satatam{恒常}abhiname{礼敬}
+ taṃ munindaṃ munindaṃ .//牟尼王为世间(人).非世间(天.梵天)所喜爱，恒常礼敬彼牟尼王！
+
+23. Buddho{佛陀} nigrodha{榕树}bimbo{身} mudu{柔软}kara{手}caraṇo{足} 
+brahma{梵天}ghos{声}eṇi{鹿}jaṅgho{胫},//佛陀之身如榕树[一般圆满].手足柔软，声如梵天.胫如鹿
+kosac{藏}chād{覆蓋}aṅgajāto{生殖器} punarapi{另外} sugato{善至} 
+suppatiṭṭhita{站立平稳}pādo{足};//.生殖器密藏；另外，善至站立足平稳，[眉间]；
+mūd{柔软}odāt{白}uṇṇa{毫}lomo{毛} athamapi{还有} sugato{善至} 
+brahm{如梵天}ujuggattabhāvo{直立},//白毫柔软, 还有，善至如梵天[一般身躯]直立，
+nīl{绀青}akkhī{眼}dīgha{长}paṇhī{足踵}sukhum{细滑}amala{无垢}chavī{皮肤}
+thomyarasaggasaggī{尝味得最上}.//眼色绀青.足踵长.皮肤细滑无垢，尝味得最上[滋味]。
+
+24. Cattālīsaggadanto{四十颗最上之齿} samaka{齿}lapanajo{整齐} antaraṃ{中間} sappapīno{平满},//四十颗最上之齿整齐，肩膀无缝且平满；
+cakkenaṅkitapādo{足有轮相} aviraḷa{无缝}dasano{齿} mārajus{胜魔者}saṅkhapādo{足踝高好}.//足有轮相.齿无缝，胜魔者足踝高好；
+Tiṭṭhanto{站着} nonamanto{不弯曲} bhayakara{双手}mudunā{柔软}jaṇṇu{膝}kānāmasanto{触摩至},//站着不弯曲，柔软的双手可以触摩至膝；
+vaṭṭak{圆满}khandho{肩膀} jino{勝者} go{牛}taruṇa{幼小的}pakhumako{睫毛} sīha{狮子}pubbaḍḍhakāyo{上半身}.//肩膀圆满.睫毛如牛犊，上半身如狮子。
+
+25. Sattappīno{七处平满} ca dīghaṅguli{指纤长} matha //七处平满.指纤长，
+sugato{善至} lomakūpekalomo{一毛孔一毫毛},//善至一毛孔一毫毛，
+sampann{拥有}odāta{白色的}dāṭho{牙齿} kanaka{黄金}sama{相同}taco{皮肤} 
+nīlamuddhaggalomo{青色毛端向上}.//拥有白色的牙齿.如黄金般的皮肤，青色毛端向上[生长]；
+Sambuddho{正觉者} thūla{广长}jivho{舌} atha{又} sīha{狮子}hanuko{颚} //正觉者舌广长.又颚如狮子.
+jālikap{缦网}pāda{足}hattho{手}, nātho{怙主} uṇhīsa{肉髻}sīso{头顶}//手足缦网，怙主头顶有肉髻
+ iti{如是}guṇasa{功德}hitaṃ{拥有} taṃ mahesiṃ{大仙} namāmi .// 我礼敬彼拥有如是功德的大仙！
+
+26. Buddhobuddho'ti{“佛陀，佛陀”} ghoso{声音} atidullabhataro{极难得} kākathā{更不用说}//26.[甚至听到]“佛陀，佛陀”的声音都极难得，
+buddhabhāvo{佛果},//更不用说[证悟]佛果了！
+loke{世上} tasmā{所以}vibhāvī{明智者}vividha{各种}hitasukhaṃ{利乐}
+ sādhavo{善人们} patthayantā{希求}.//所以，世上希求[世间.出世间]各种利乐的明智者、善人们，
+Iṭṭhaṃ{可爱} atthaṃ{為了} vahantaṃ{带来} sur{神}anara{非人}mahitaṃ{敬奉者} //愿恒常礼敬彼 带来可爱.[今生后世]义利者，
+nibbhayaṃ{无畏者} dakkhiṇeyyaṃ{应施者} ,//受天.非天(人)敬奉者，
+lokānaṃ{世间} nandi{乐}vaḍḍhaṃ{增长} dasabal{具十力者}amasamaṃ{无比者} taṃ //无畏者.应施者.增长世间福乐者，
+namassantu{礼敬} niccaṃ .//具十力者.无比者！
+`
+//--></script>
+<script><!--
+const patisanghayoniso=`
+Taṅkhaṇika{受用(四资具)当下} paccavekkhaṇa{省思文} pāṭha{誦}
+paṭisaṅkhāyoniso{如理省思} cīvaraṃ{衣} paṭisevāmi{我受用},
+yāvadeva{只是为了} sītassa{寒冷} paṭighātāya{防御} , 
+uṇhassa{炎热} paṭighātāya , 
+ḍaṃsa{虻} makasa{蚊} vātātapa{风吹日晒} siriṃsapa{爬虫类}
+samphassānaṃ{触恼} paṭighātāya 
+yāvadeva hirikopīna{羞处} paṭicchādanatthaṃ{遮蔽} 
+
+paṭisaṅkhāyoniso piṇḍapātaṃ{食物} paṭisevāmi , 
+n'eva{确实不} davāya{为嬉戏} na{不} madāya{为骄慢} 
+na maṇḍanāya{为装饰} na vibhūsanāya{为庄严} , 
+yāvadeva imassa{此} kāyassa{身} ṭhitiyā{住立} yāpanāya{存续}
+vihiṃsuparatiyā{为了停止伤害} brahmacariyānuggahāya{为了资助梵行}, //消除旧，
+iti{如此}  purāṇañca{旧} vedanaṃ{受} paṭihaṅkhāmi{我将消除} 
+navañca{新} vedanaṃ na uppādessāmi{生},//并使新受不生，
+yātrā{生活的資助} ca{且} me{我} bhavissati{维持} anavajjatā{无过} ca 
+phāsuvihāro{安住} cā{且} //我将维持生命、无过且安住。
+
+paṭisaṅkhāyoniso senāsanaṃ{坐卧处} paṭisevāmi , 
+yāvadeva sītassa paṭighātāya , uṇhassa paṭighātāya , 
+ḍaṃsa makasa vātātapa siriṃsapa 
+samphassānaṃ paṭighātāya , 
+yāvadeva utuparissaya{季候的危险} vinodanaṃ{免除}
+paṭisallān{宴坐}ārāmatthaṃ{寂静之乐} .//而好禅坐（独处）之乐。
+
+paṭisaṅkhāyoniso gilāna{病者} paccaya{所需} bhesajja{医药} 
+parikkhāraṃ{必須品} paṭisevāmi , //我如理省思所受用的病者所需之医药资具
+yāvadeva uppannānaṃ{已生起} veyyābādhikānaṃ{病苦} 
+vedanānaṃ{受} paṭighātāya ,//只是为了消除已生起的病苦之受 
+abyāpajjha{没有身苦} paramatāyā{尽量}.//为了尽量没有身苦
+`
+//--></script>
+
+<script><!--
+
+const dict={};
+
+const parseData = data=> {
+	const out=[];
+	lines=data.split(/\r?\n/);
+	lines.forEach( line=>{
+		if (!line)return;
+		const sections=line.split("//");
+		const words=sections[0].trim().split(/ +/);
+		const translation=sections[1]||"";
+		const lineout=[];
+		
+		words.forEach(item=>{
+			let last=0;
+			let chi="--";
+			item.replace(/\{(.*?)\}/g,(m,m1,p)=>{
+				let pli=item.substring(last,p);
+				//if (pli=="p") debugger
+				if (m1.length) {
+					chi=m1;
+					dict[pli]=chi;
+				} else {
+					chi=dict[pli]||chi;
+				}
+
+				lineout.push( {pli,chi});
+				last= p+m.length;
+			});
+			chi="";
+			pli=item.substring(last);
+			chi=dict[pli]||chi;
+			pli= "&nbsp;"+pli+"&nbsp;";
+			lineout.push({pli,chi})
+		})
+
+		if (translation) lineout.push({translation});
+		out.push(lineout);
+	})
+	return out;
+}
+const opentrans=()=>{
+	const ele=event.target
+	const attr=ele.attributes;
+	if (attr.t) {
+		if (attr.t.value==ele.innerHTML) {
+			ele.innerHTML="…";	
+		} else{
+			ele.innerHTML=attr.t.value;
+		}
+	}
+}
+
+const renderParagraph =data=>{
+	let out="";
+
+	data.forEach( line=>{
+		out+="<table class=paragraph onclick=opentrans()><tr>"
+		line.forEach( unit=>{
+			if (unit.translation){
+				out+="<td class=trans  t='"+unit.translation+"'>…</td>";	
+			} else {
+				out+="<td class=word>"
+				out+="<span class=pli>"+unit.pli+"</span><br/>"+unit.chi;
+				out+="</td>";
+			}
+		})
+		out+="</tr></table><div class=hr></div>";
+	});
+	return out;
+}
+
+const render=name=>{
+	const parsed=parseData(eval(name));
+	document.getElementById("main").innerHTML=renderParagraph(parsed);
+}
+
+const init=()=>{
+	render("anekajati");//
+}
+//--></script>
+</body>
+</html>
